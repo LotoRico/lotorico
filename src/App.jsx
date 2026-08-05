@@ -9,7 +9,8 @@ import {
   Layers, 
   Sparkles,
   Info,
-  CheckCircle2
+  CheckCircle2,
+  Check
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -149,22 +150,24 @@ export default function App() {
     }));
     const worksheet = XLSX.utils.json_to_sheet(dados);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Jogos LotoRico");
-    XLSX.writeFile(workbook, "lotorico_jogos_otimizados.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Jogos Loto Rico");
+    XLSX.writeFile(workbook, "loto_rico_jogos_otimizados.xlsx");
   };
 
   const exportarPDF = () => {
     if (jogosGerados.length === 0) return;
     const doc = new jsPDF();
-    doc.setFillColor(93, 20, 115); // Tom Roxo Caixa
-    doc.rect(0, 0, 210, 25, 'F');
+    // Cabeçalho PDF - Roxo Caixa (#6c0a63)
+    doc.setFillColor(108, 10, 99);
+    doc.rect(0, 0, 210, 28, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
-    doc.text("LOTORICO - Inteligência e Fechamentos para a Lotofácil", 14, 16);
+    doc.setFont('helvetica', 'bold');
+    doc.text("LOTO RICO - Fechamentos Inteligentes para a Lotofácil", 14, 18);
     
     const tableData = jogosGerados.map(j => [
-      `Jogo ${j.id}`,
-      j.numeros.map(n => String(n).padStart(2, '0')).join(', '),
+      `Jogo ${String(j.id).padStart(2, '0')}`,
+      j.numeros.map(n => String(n).padStart(2, '0')).join('  '),
       j.primos,
       j.moldura,
       j.soma,
@@ -172,184 +175,185 @@ export default function App() {
     ]);
 
     doc.autoTable({
-      startY: 32,
-      head: [['#', 'Dezenas Selecionadas', 'Primos', 'Moldura', 'Soma', 'Ímpares']],
+      startY: 36,
+      head: [['#', 'Dezenas Selecionadas (Volante)', 'Primos', 'Moldura', 'Soma', 'Ímpares']],
       body: tableData,
       theme: 'grid',
-      headStyles: { fillColor: [93, 20, 115] },
-      styles: { fontSize: 9, halign: 'center' },
-      columnStyles: { 1: { halign: 'left', fontStyle: 'bold' } }
+      headStyles: { fillColor: [108, 10, 99], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+      styles: { fontSize: 10, halign: 'center', cellPadding: 5 },
+      columnStyles: { 0: { cellWidth: 20 }, 1: { halising: 'left', fontStyle: 'bold', cellWidth: 90 } },
+      alternateRowStyles: { fillColor: [248, 249, 250] }
     });
 
-    doc.save("lotorico_jogos_otimizados.pdf");
+    doc.save("loto_rico_jogos_otimizados.pdf");
   };
 
   return (
-    <div className="min-h-screen bg-[#120a1f] text-slate-100 font-sans pb-16 selection:bg-[#7b2cbf] selection:text-white">
-      {/* Header Oficial Lotofácil - Roxo Caixa */}
-      <header className="bg-gradient-to-r from-[#3c096c] via-[#5a189a] to-[#7b2cbf] border-b border-[#9d4edd]/30 sticky top-0 z-50 shadow-2xl">
+    <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans pb-16 selection:bg-[#6c0a63] selection:text-white">
+      {/* Header Oficial Loto Rico - Roxo Caixa com fundo limpo */}
+      <header className="bg-gradient-to-r from-[#5a189a] via-[#6c0a63] to-[#7b2cbf] text-white border-b border-purple-900/10 sticky top-0 z-50 shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-5 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center space-x-3.5">
-            <div className="bg-[#240046] p-3 rounded-2xl shadow-inner border border-[#9d4edd]/40">
-              <Trophy className="w-7 h-7 text-[#e0aaff]" />
+            <div className="bg-white/10 p-3 rounded-2xl shadow-inner backdrop-blur-sm border border-white/20">
+              <Trophy className="w-7 h-7 text-amber-300" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white drop-shadow-md">
-                LOTORICO
+              <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white drop-shadow">
+                LOTO RICO
               </h1>
-              <p className="text-xs text-[#e0aaff] font-medium tracking-wide">Inteligência e Geração de Fechamentos para a Lotofácil</p>
+              <p className="text-xs text-purple-200 font-medium tracking-wide">Inteligência e Geração de Fechamentos para a Lotofácil</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-[#240046]/80 px-4 py-2 rounded-full border border-[#9d4edd]/40 text-xs font-bold text-[#e0aaff] shadow-lg">
-            <Sparkles className="w-4 h-4 text-[#ff9e00]" />
-            <span>Padrão Oficial Lotofácil (Caixa)</span>
+          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 text-xs font-bold text-white shadow-sm">
+            <Sparkles className="w-4 h-4 text-amber-300" />
+            <span>Padrão Oficial Caixa</span>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 mt-8 space-y-8">
         
-        {/* Painel Principal de Configurações e Filtros */}
+        {/* Painel de Controle e Filtros */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Parâmetros do Concurso */}
-          <div className="bg-[#1b102f] border border-[#3c096c] rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
+          {/* Parâmetros Básicos */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2.5 mb-5 text-[#e0aaff] font-bold border-b border-[#3c096c] pb-3">
-                <Settings className="w-5 h-5 text-[#c77dff]" />
+              <div className="flex items-center gap-2.5 mb-5 text-[#6c0a63] font-bold border-b border-slate-100 pb-3">
+                <Settings className="w-5 h-5 text-[#6c0a63]" />
                 <h2 className="text-base">Parâmetros de Geração</h2>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#c77dff] mb-1.5">Quantidade de Jogos</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Quantidade de Jogos</label>
                   <input 
                     type="number" 
                     min="1" 
                     max="100" 
                     value={qtdJogos} 
                     onChange={(e) => setQtdJogos(parseInt(e.target.value) || 1)}
-                    className="w-full bg-[#10071c] border border-[#5a189a] rounded-xl px-4 py-3 text-slate-100 font-bold focus:outline-none focus:border-[#c77dff] focus:ring-2 focus:ring-[#7b2cbf]/30 transition-all text-base"
+                    className="w-full bg-[#f8f9fa] border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:border-[#6c0a63] focus:ring-2 focus:ring-[#6c0a63]/20 transition-all text-base"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#c77dff] mb-1.5">Concurso Alvo (Opcional)</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Concurso Alvo (Opcional)</label>
                   <input 
                     type="text" 
                     placeholder="Ex: 3150" 
                     value={concursoAlvo} 
                     onChange={(e) => setConcursoAlvo(e.target.value)}
-                    className="w-full bg-[#10071c] border border-[#5a189a] rounded-xl px-4 py-3 text-slate-100 font-bold focus:outline-none focus:border-[#c77dff] focus:ring-2 focus:ring-[#7b2cbf]/30 transition-all text-base"
+                    className="w-full bg-[#f8f9fa] border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:border-[#6c0a63] focus:ring-2 focus:ring-[#6c0a63]/20 transition-all text-base"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-[#3c096c] text-xs text-slate-300 flex items-start gap-2.5">
-              <Info className="w-4 h-4 text-[#e0aaff] shrink-0 mt-0.5" />
-              <span>Configure seus filtros estratégicos ao lado para gerar combinações altamente assertivas.</span>
+            <div className="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500 flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-[#6c0a63] shrink-0 mt-0.5" />
+              <span>Configure os filtros estratégicos ao lado para gerar combinações perfeitamente balanceadas.</span>
             </div>
           </div>
 
-          {/* Filtros Modulares Avançados */}
-          <div className="lg:col-span-2 bg-[#1b102f] border border-[#3c096c] rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
+          {/* Filtros Modulares */}
+          <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
             <div>
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5 border-b border-[#3c096c] pb-3">
-                <div className="flex items-center gap-2.5 text-[#e0aaff] font-bold">
-                  <Sliders className="w-5 h-5 text-[#c77dff]" />
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5 text-[#6c0a63] font-bold">
+                  <Sliders className="w-5 h-5 text-[#6c0a63]" />
                   <h2 className="text-base">Filtros e Estratégias Modulares</h2>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={marcarTodas} className="text-xs bg-[#3c096c] hover:bg-[#5a189a] text-purple-200 px-3.5 py-1.5 rounded-xl border border-[#7b2cbf]/50 transition-all font-semibold cursor-pointer shadow">
+                  <button onClick={marcarTodas} className="text-xs bg-purple-50 hover:bg-purple-100 text-[#6c0a63] px-3.5 py-1.5 rounded-xl border border-purple-200 transition-all font-semibold cursor-pointer shadow-sm">
                     Marcar Todas
                   </button>
-                  <button onClick={desmarcarTodas} className="text-xs bg-[#240046] hover:bg-[#3c096c] text-purple-300 px-3.5 py-1.5 rounded-xl border border-[#3c096c] transition-all font-semibold cursor-pointer shadow">
+                  <button onClick={desmarcarTodas} className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-1.5 rounded-xl border border-slate-200 transition-all font-semibold cursor-pointer shadow-sm">
                     Desmarcar Todas
                   </button>
                 </div>
               </div>
 
-              {/* Grid de Checkboxes Estilizados */}
+              {/* Grid de Checkboxes */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 my-2">
                 
-                <label className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer shadow-md ${filtroPrimos ? 'bg-[#240046]/80 border-[#9d4edd] text-white shadow-[#5a189a]/20' : 'bg-[#10071c]/60 border-[#3c096c]/40 text-slate-400'}`}>
+                <label className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer shadow-sm ${filtroPrimos ? 'bg-purple-50/70 border-[#6c0a63] text-slate-900 shadow-purple-950/5' : 'bg-[#f8f9fa] border-slate-200 text-slate-500'}`}>
                   <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={filtroPrimos} onChange={(e) => setFiltroPrimos(e.target.checked)} className="w-4 h-4 accent-[#9d4edd] rounded cursor-pointer" />
+                    <input type="checkbox" checked={filtroPrimos} onChange={(e) => setFiltroPrimos(e.target.checked)} className="w-4 h-4 accent-[#6c0a63] rounded cursor-pointer" />
                     <div>
                       <p className="text-sm font-bold">Números Primos</p>
-                      <p className="text-xs text-purple-300/80">Padrão ideal: 4 a 6 primos</p>
+                      <p className="text-xs text-slate-500">Padrão ideal: 4 a 6 primos</p>
                     </div>
                   </div>
-                  {filtroPrimos && <CheckCircle2 className="w-4 h-4 text-[#c77dff]" />}
+                  {filtroPrimos && <CheckCircle2 className="w-4 h-4 text-[#6c0a63]" />}
                 </label>
 
-                <label className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer shadow-md ${filtroMoldura ? 'bg-[#240046]/80 border-[#9d4edd] text-white shadow-[#5a189a]/20' : 'bg-[#10071c]/60 border-[#3c096c]/40 text-slate-400'}`}>
+                <label className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer shadow-sm ${filtroMoldura ? 'bg-purple-50/70 border-[#6c0a63] text-slate-900 shadow-purple-950/5' : 'bg-[#f8f9fa] border-slate-200 text-slate-500'}`}>
                   <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={filtroMoldura} onChange={(e) => setFiltroMoldura(e.target.checked)} className="w-4 h-4 accent-[#9d4edd] rounded cursor-pointer" />
+                    <input type="checkbox" checked={filtroMoldura} onChange={(e) => setFiltroMoldura(e.target.checked)} className="w-4 h-4 accent-[#6c0a63] rounded cursor-pointer" />
                     <div>
                       <p className="text-sm font-bold">Moldura & Miolo</p>
-                      <p className="text-xs text-purple-300/80">Padrão ideal: 8 a 10 na borda</p>
+                      <p className="text-xs text-slate-500">Padrão ideal: 8 a 10 na borda</p>
                     </div>
                   </div>
-                  {filtroMoldura && <CheckCircle2 className="w-4 h-4 text-[#c77dff]" />}
+                  {filtroMoldura && <CheckCircle2 className="w-4 h-4 text-[#6c0a63]" />}
                 </label>
 
-                <label className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer shadow-md ${filtroSoma ? 'bg-[#240046]/80 border-[#9d4edd] text-white shadow-[#5a189a]/20' : 'bg-[#10071c]/60 border-[#3c096c]/40 text-slate-400'}`}>
+                <label className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer shadow-sm ${filtroSoma ? 'bg-purple-50/70 border-[#6c0a63] text-slate-900 shadow-purple-950/5' : 'bg-[#f8f9fa] border-slate-200 text-slate-500'}`}>
                   <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={filtroSoma} onChange={(e) => setFiltroSoma(e.target.checked)} className="w-4 h-4 accent-[#9d4edd] rounded cursor-pointer" />
+                    <input type="checkbox" checked={filtroSoma} onChange={(e) => setFiltroSoma(e.target.checked)} className="w-4 h-4 accent-[#6c0a63] rounded cursor-pointer" />
                     <div>
                       <p className="text-sm font-bold">Soma Total Equilibrada</p>
-                      <p className="text-xs text-purple-300/80">Padrão ideal: 180 a 220</p>
+                      <p className="text-xs text-slate-500">Padrão ideal: 180 a 220</p>
                     </div>
                   </div>
-                  {filtroSoma && <CheckCircle2 className="w-4 h-4 text-[#c77dff]" />}
+                  {filtroSoma && <CheckCircle2 className="w-4 h-4 text-[#6c0a63]" />}
                 </label>
 
-                <label className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer shadow-md ${filtroImpares ? 'bg-[#240046]/80 border-[#9d4edd] text-white shadow-[#5a189a]/20' : 'bg-[#10071c]/60 border-[#3c096c]/40 text-slate-400'}`}>
+                <label className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer shadow-sm ${filtroImpares ? 'bg-purple-50/70 border-[#6c0a63] text-slate-900 shadow-purple-950/5' : 'bg-[#f8f9fa] border-slate-200 text-slate-500'}`}>
                   <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={filtroImpares} onChange={(e) => setFiltroImpares(e.target.checked)} className="w-4 h-4 accent-[#9d4edd] rounded cursor-pointer" />
+                    <input type="checkbox" checked={filtroImpares} onChange={(e) => setFiltroImpares(e.target.checked)} className="w-4 h-4 accent-[#6c0a63] rounded cursor-pointer" />
                     <div>
                       <p className="text-sm font-bold">Ímpares / Pares</p>
-                      <p className="text-xs text-purple-300/80">Padrão ideal: 7 a 9 ímpares</p>
+                      <p className="text-xs text-slate-500">Padrão ideal: 7 a 9 ímpares</p>
                     </div>
                   </div>
-                  {filtroImpares && <CheckCircle2 className="w-4 h-4 text-[#c77dff]" />}
+                  {filtroImpares && <CheckCircle2 className="w-4 h-4 text-[#6c0a63]" />}
                 </label>
 
               </div>
 
-              {/* Filtro Especial Últimos 2 Concursos */}
-              <div className={`mt-3.5 p-4 rounded-xl border transition-all shadow-md ${filtroUltimosDois ? 'bg-[#240046]/80 border-[#9d4edd]' : 'bg-[#10071c]/60 border-[#3c096c]/40'}`}>
+              {/* Filtro Últimos 2 Concursos */}
+              <div className={`mt-3.5 p-4 rounded-xl border transition-all shadow-sm ${filtroUltimosDois ? 'bg-purple-50/70 border-[#6c0a63]' : 'bg-[#f8f9fa] border-slate-200'}`}>
                 <label className="flex items-center justify-between cursor-pointer mb-2">
                   <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={filtroUltimosDois} onChange={(e) => setFiltroUltimosDois(e.target.checked)} className="w-4 h-4 accent-[#9d4edd] rounded cursor-pointer" />
+                    <input type="checkbox" checked={filtroUltimosDois} onChange={(e) => setFiltroUltimosDois(e.target.checked)} className="w-4 h-4 accent-[#6c0a63] rounded cursor-pointer" />
                     <div>
-                      <p className="text-sm font-bold text-white">Análise dos Últimos 2 Concursos Anteriores</p>
-                      <p className="text-xs text-purple-300">Filtra repetições e interseções com base nos 2 concursos imediatamente anteriores</p>
+                      <p className="text-sm font-bold text-slate-900">Análise dos Últimos 2 Concursos Anteriores</p>
+                      <p className="text-xs text-slate-500">Filtra repetições com base nos 2 concursos imediatamente anteriores</p>
                     </div>
                   </div>
-                  {filtroUltimosDois && <CheckCircle2 className="w-4 h-4 text-[#c77dff]" />}
+                  {filtroUltimosDois && <CheckCircle2 className="w-4 h-4 text-[#6c0a63]" />}
                 </label>
 
                 {filtroUltimosDois && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-3 border-t border-[#3c096c]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-3 border-t border-purple-200/60">
                     <div>
-                      <label className="block text-[11px] uppercase tracking-wider text-[#e0aaff] mb-1 font-bold">Concurso N-1 (Dezenas)</label>
+                      <label className="block text-[11px] uppercase tracking-wider text-[#6c0a63] mb-1 font-bold">Concurso N-1 (Dezenas)</label>
                       <input 
                         type="text" 
                         value={concursoAnterior1} 
                         onChange={(e) => setConcursoAnterior1(e.target.value)}
-                        className="w-full bg-[#10071c] border border-[#5a189a] rounded-lg px-3.5 py-2 text-xs text-purple-200 font-mono focus:outline-none focus:border-[#c77dff]"
+                        className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-[#6c0a63]"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] uppercase tracking-wider text-[#e0aaff] mb-1 font-bold">Concurso N-2 (Dezenas)</label>
+                      <label className="block text-[11px] uppercase tracking-wider text-[#6c0a63] mb-1 font-bold">Concurso N-2 (Dezenas)</label>
                       <input 
                         type="text" 
                         value={concursoAnterior2} 
                         onChange={(e) => setConcursoAnterior2(e.target.value)}
-                        className="w-full bg-[#10071c] border border-[#5a189a] rounded-lg px-3.5 py-2 text-xs text-purple-200 font-mono focus:outline-none focus:border-[#c77dff]"
+                        className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-[#6c0a63]"
                       />
                     </div>
                   </div>
@@ -358,12 +362,12 @@ export default function App() {
 
             </div>
 
-            {/* Botão de Geração Principal */}
+            {/* Botão de Geração */}
             <div className="mt-6">
               <button 
                 onClick={handleGerarJogos}
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-[#5a189a] via-[#7b2cbf] to-[#9d4edd] hover:from-[#7b2cbf] hover:to-[#c77dff] text-white font-extrabold py-4 px-6 rounded-xl shadow-xl shadow-[#3c096c]/60 flex items-center justify-center gap-2.5 transition-all transform active:scale-[0.99] disabled:opacity-50 cursor-pointer border border-[#e0aaff]/30 text-base"
+                className="w-full bg-gradient-to-r from-[#5a189a] via-[#6c0a63] to-[#7b2cbf] hover:from-[#6c0a63] hover:to-[#5a189a] text-white font-extrabold py-4 px-6 rounded-xl shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2.5 transition-all transform active:scale-[0.99] disabled:opacity-50 cursor-pointer text-base"
               >
                 {loading ? (
                   <>
@@ -372,7 +376,7 @@ export default function App() {
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-5 h-5 text-[#ff9e00]" />
+                    <Sparkles className="w-5 h-5 text-amber-300" />
                     <span>Gerar Jogos Otimizados</span>
                   </>
                 )}
@@ -385,50 +389,50 @@ export default function App() {
         {/* Estatísticas do Fechamento */}
         {estatisticas && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-[#1b102f] border border-[#3c096c] p-4 rounded-xl text-center shadow-lg">
-              <p className="text-xs text-[#e0aaff] uppercase font-bold tracking-wider">Jogos Gerados</p>
-              <p className="text-2xl font-black text-white mt-1">{estatisticas.total}</p>
+            <div className="bg-white border border-slate-200 p-4 rounded-xl text-center shadow-sm">
+              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Jogos Gerados</p>
+              <p className="text-2xl font-black text-[#6c0a63] mt-1">{estatisticas.total}</p>
             </div>
-            <div className="bg-[#1b102f] border border-[#3c096c] p-4 rounded-xl text-center shadow-lg">
-              <p className="text-xs text-[#e0aaff] uppercase font-bold tracking-wider">Média de Soma</p>
-              <p className="text-2xl font-black text-white mt-1">{estatisticas.mediaSoma}</p>
+            <div className="bg-white border border-slate-200 p-4 rounded-xl text-center shadow-sm">
+              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Média de Soma</p>
+              <p className="text-2xl font-black text-slate-800 mt-1">{estatisticas.mediaSoma}</p>
             </div>
-            <div className="bg-[#1b102f] border border-[#3c096c] p-4 rounded-xl text-center shadow-lg">
-              <p className="text-xs text-[#e0aaff] uppercase font-bold tracking-wider">Média de Primos</p>
-              <p className="text-2xl font-black text-white mt-1">{estatisticas.mediaPrimos}</p>
+            <div className="bg-white border border-slate-200 p-4 rounded-xl text-center shadow-sm">
+              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Média de Primos</p>
+              <p className="text-2xl font-black text-slate-800 mt-1">{estatisticas.mediaPrimos}</p>
             </div>
-            <div className="bg-[#1b102f] border border-[#3c096c] p-4 rounded-xl text-center shadow-lg">
-              <p className="text-xs text-[#e0aaff] uppercase font-bold tracking-wider">Média na Moldura</p>
-              <p className="text-2xl font-black text-white mt-1">{estatisticas.mediaMoldura}</p>
+            <div className="bg-white border border-slate-200 p-4 rounded-xl text-center shadow-sm">
+              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Média na Moldura</p>
+              <p className="text-2xl font-black text-slate-800 mt-1">{estatisticas.mediaMoldura}</p>
             </div>
           </div>
         )}
 
         {/* Tabela de Jogos Gerados com Volantes Estilizados */}
         {jogosGerados.length > 0 && (
-          <div className="bg-[#1b102f] border border-[#3c096c] rounded-2xl shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-[#3c096c] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2.5">
-                  <Layers className="w-5 h-5 text-[#c77dff]" />
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2.5">
+                  <Layers className="w-5 h-5 text-[#6c0a63]" />
                   <span>Fechamento Estratégico Gerado</span>
                 </h3>
-                <p className="text-xs text-purple-300">Dezenas validadas conforme a identidade visual e os filtros selecionados</p>
+                <p className="text-xs text-slate-500">Dezenas validadas conforme o padrão oficial da Lotofácil</p>
               </div>
 
               <div className="flex items-center gap-3">
                 <button 
                   onClick={exportarExcel}
-                  className="bg-[#240046] hover:bg-[#3c096c] text-[#e0aaff] border border-[#5a189a] text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow cursor-pointer"
+                  className="bg-[#f8f9fa] hover:bg-slate-100 text-[#6c0a63] border border-slate-200 text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm cursor-pointer"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-[#4ade80]" />
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                   <span>Exportar Excel</span>
                 </button>
                 <button 
                   onClick={exportarPDF}
-                  className="bg-[#240046] hover:bg-[#3c096c] text-[#e0aaff] border border-[#5a189a] text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow cursor-pointer"
+                  className="bg-[#f8f9fa] hover:bg-slate-100 text-[#6c0a63] border border-slate-200 text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm cursor-pointer"
                 >
-                  <FileText className="w-4 h-4 text-[#f87171]" />
+                  <FileText className="w-4 h-4 text-rose-600" />
                   <span>Exportar PDF</span>
                 </button>
               </div>
@@ -437,7 +441,7 @@ export default function App() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#10071c] text-[#e0aaff] text-xs uppercase tracking-wider border-b border-[#3c096c]">
+                  <tr className="bg-[#f8f9fa] text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200">
                     <th className="py-3.5 px-4 font-bold text-center w-16">#</th>
                     <th className="py-3.5 px-4 font-bold">Dezenas Selecionadas (Volante Lotofácil)</th>
                     <th className="py-3.5 px-4 font-bold text-center">Primos</th>
@@ -446,10 +450,10 @@ export default function App() {
                     <th className="py-3.5 px-4 font-bold text-center">Ímpares</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#3c096c]/40 text-sm">
+                <tbody className="divide-y divide-slate-100 text-sm">
                   {jogosGerados.map((jogo) => (
-                    <tr key={jogo.id} className="hover:bg-[#3c096c]/20 transition-colors">
-                      <td className="py-4 px-4 text-center font-mono text-xs text-[#c77dff] font-bold">
+                    <tr key={jogo.id} className="hover:bg-purple-50/40 transition-colors">
+                      <td className="py-4 px-4 text-center font-mono text-xs text-[#6c0a63] font-bold">
                         {String(jogo.id).padStart(2, '0')}
                       </td>
                       <td className="py-4 px-4">
@@ -457,17 +461,17 @@ export default function App() {
                           {jogo.numeros.map((num, idx) => (
                             <span 
                               key={idx} 
-                              className="w-8 h-8 flex items-center justify-center bg-[#10071c] border border-[#5a189a] rounded-lg text-xs font-black text-white shadow-md shadow-[#240046]"
+                              className="w-8 h-8 flex items-center justify-center bg-[#f8f9fa] border border-slate-200 rounded-lg text-xs font-black text-slate-800 shadow-sm"
                             >
                               {String(num).padStart(2, '0')}
                             </span>
                           ))}
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-center font-bold text-slate-200">{jogo.primos}</td>
-                      <td className="py-4 px-4 text-center font-bold text-slate-200">{jogo.moldura}</td>
-                      <td className="py-4 px-4 text-center font-bold text-slate-200">{jogo.soma}</td>
-                      <td className="py-4 px-4 text-center font-bold text-slate-200">{jogo.impares}</td>
+                      <td className="py-4 px-4 text-center font-bold text-slate-700">{jogo.primos}</td>
+                      <td className="py-4 px-4 text-center font-bold text-slate-700">{jogo.moldura}</td>
+                      <td className="py-4 px-4 text-center font-bold text-slate-700">{jogo.soma}</td>
+                      <td className="py-4 px-4 text-center font-bold text-slate-700">{jogo.impares}</td>
                     </tr>
                   ))}
                 </tbody>
