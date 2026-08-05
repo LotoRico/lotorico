@@ -4,8 +4,8 @@ export default function App() {
   const [qtdJogos, setQtdJogos] = useState(10);
   const [concursoAlvo, setConcursoAlvo] = useState('');
   
-  const [concursoAnterior1, setConcursoAnterior1] = useState('02, 04, 07, 09, 11, 12, 14, 16, 18, 20, 21, 22, 23, 24, 25');
-  const [concursoAnterior2, setConcursoAnterior2] = useState('01, 03, 05, 08, 10, 12, 13, 15, 17, 19, 21, 22, 23, 24, 25');
+  const [concursoAnterior1, setConcursoAnterior1] = useState('02 04 07 09 11 12 14 16 18 20 21 22 23 24 25');
+  const [concursoAnterior2, setConcursoAnterior2] = useState('01 03 05 08 10 12 13 15 17 19 21 22 23 24 25');
 
   const [filtroPrimos, setFiltroPrimos] = useState(true);
   const [filtroMoldura, setFiltroMoldura] = useState(true);
@@ -36,11 +36,14 @@ export default function App() {
   };
 
   const parseConcursoString = (str) => {
-    return str.split(/[,\s]+/).map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 25);
+    return str.split(/[\s,]+/).map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 25);
   };
 
+  const nenhumaSelecionada = !filtroPrimos && !filtroMoldura && !filtroSoma && !filtroImpares && !filtroUltimosDois;
+
   const validarFiltros = (jogo) => {
-    // Cada filtro atua de forma independente: só valida se estiver ativo (true)
+    if (nenhumaSelecionada) return true;
+
     if (filtroPrimos) {
       const p = contarPrimos(jogo);
       if (p < 4 || p > 6) return false;
@@ -121,6 +124,33 @@ export default function App() {
     setFiltroSoma(false);
     setFiltroImpares(false);
     setFiltroUltimosDois(false);
+  };
+
+  const handleImprimir = () => {
+    window.print();
+  };
+
+  const handleExportarExcel = () => {
+    let csvContent = "data:text/csv;charset=utf-8,Jogo;";
+    for (let i = 1; i <= 15; i++) csvContent += `D${i};`;
+    csvContent += "Primos;Moldura;Soma;Impares\n";
+
+    jogosGerados.forEach(j => {
+      let row = `${j.id};` + j.numeros.join(";") + `;${j.primos};${j.moldura};${j.soma};${j.impares}\n`;
+      csvContent += row;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "loto_rico_jogos.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportarPDF = () => {
+    window.print();
   };
 
   return (
@@ -229,37 +259,61 @@ export default function App() {
               </label>
 
               {filtroUltimosDois && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #e9d5ff' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #e9d5ff' }}>
+                  
+                  {/* Concurso N-1 em colmeias */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#6c0a63', marginBottom: '4px' }}>Concurso N-1</label>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#6c0a63', marginBottom: '6px' }}>Concurso N-1 (Digite ou Ajuste)</label>
                     <input 
                       type="text" 
                       value={concursoAnterior1} 
                       onChange={(e) => setConcursoAnterior1(e.target.value)}
-                      style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#ffffff', fontSize: '12px', fontFamily: 'monospace', boxSizing: 'border-box' }}
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #d1d5db', backgroundColor: '#ffffff', fontSize: '11px', fontFamily: 'monospace', boxSizing: 'border-box', marginBottom: '8px' }}
                     />
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                      {parseConcursoString(concursoAnterior1).map((num, idx) => (
+                        <span 
+                          key={idx} 
+                          style={{ width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff', border: '1px solid #d8b4fe', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', color: '#6c0a63', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                        >
+                          {String(num).padStart(2, '0')}
+                        </span>
+                      ))}
+                    </div>
                   </div>
+
+                  {/* Concurso N-2 em colmeias */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#6c0a63', marginBottom: '4px' }}>Concurso N-2</label>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#6c0a63', marginBottom: '6px' }}>Concurso N-2 (Digite ou Ajuste)</label>
                     <input 
                       type="text" 
                       value={concursoAnterior2} 
                       onChange={(e) => setConcursoAnterior2(e.target.value)}
-                      style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#ffffff', fontSize: '12px', fontFamily: 'monospace', boxSizing: 'border-box' }}
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #d1d5db', backgroundColor: '#ffffff', fontSize: '11px', fontFamily: 'monospace', boxSizing: 'border-box', marginBottom: '8px' }}
                     />
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                      {parseConcursoString(concursoAnterior2).map((num, idx) => (
+                        <span 
+                          key={idx} 
+                          style={{ width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff', border: '1px solid #d8b4fe', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', color: '#6c0a63', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                        >
+                          {String(num).padStart(2, '0')}
+                        </span>
+                      ))}
+                    </div>
                   </div>
+
                 </div>
               )}
             </div>
 
-            {/* Botão de Geração */}
+            {/* Botão de Geração Dinâmico */}
             <button 
-              handleGerarJogos
               onClick={handleGerarJogos}
               disabled={loading}
               style={{ width: '100%', background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(108,10,99,0.3)' }}
             >
-              {loading ? 'Processando Fechamento...' : '✨ Gerar Jogos Otimizados'}
+              {loading ? 'Processando Fechamento...' : (nenhumaSelecionada ? '🎲 Gerar Apenas Jogos Aleatórios (não otimizados)' : '✨ Gerar Jogos Otimizados')}
             </button>
           </div>
 
@@ -287,11 +341,23 @@ export default function App() {
           </div>
         )}
 
-        {/* Tabela de Jogos */}
+        {/* Tabela de Jogos & Botões de Ação */}
         {jogosGerados.length > 0 && (
           <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
             <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#1f2937' }}>📊 Fechamento Estratégico Gerado</h3>
+              
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button onClick={handleImprimir} style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+                  🖨️ Imprimir
+                </button>
+                <button onClick={handleExportarExcel} style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+                  📊 Exportar Excel
+                </button>
+                <button onClick={handleExportarPDF} style={{ background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+                  📄 Exportar PDF
+                </button>
+              </div>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
