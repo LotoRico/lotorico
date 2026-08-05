@@ -1,20 +1,4 @@
 import React, { useState } from 'react';
-import { 
-  Trophy, 
-  Settings, 
-  FileSpreadsheet, 
-  FileText, 
-  RefreshCw, 
-  Sliders, 
-  Layers, 
-  Sparkles,
-  Info,
-  CheckCircle2,
-  Check
-} from 'lucide-react';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 
 export default function App() {
   const [qtdJogos, setQtdJogos] = useState(10);
@@ -138,340 +122,176 @@ export default function App() {
     setFiltroUltimosDois(false);
   };
 
-  const exportarExcel = () => {
-    if (jogosGerados.length === 0) return;
-    const dados = jogosGerados.map(j => ({
-      'Jogo #': j.id,
-      ...j.numeros.reduce((acc, n, idx) => ({ ...acc, [`N${idx+1}`]: n }), {}),
-      'Primos': j.primos,
-      'Moldura': j.moldura,
-      'Soma': j.soma,
-      'Ímpares': j.impares
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(dados);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Jogos Loto Rico");
-    XLSX.writeFile(workbook, "loto_rico_jogos_otimizados.xlsx");
-  };
-
-  const exportarPDF = () => {
-    if (jogosGerados.length === 0) return;
-    const doc = new jsPDF();
-    // Cabeçalho PDF - Roxo Caixa (#6c0a63)
-    doc.setFillColor(108, 10, 99);
-    doc.rect(0, 0, 210, 28, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text("LOTO RICO - Fechamentos Inteligentes para a Lotofácil", 14, 18);
-    
-    const tableData = jogosGerados.map(j => [
-      `Jogo ${String(j.id).padStart(2, '0')}`,
-      j.numeros.map(n => String(n).padStart(2, '0')).join('  '),
-      j.primos,
-      j.moldura,
-      j.soma,
-      j.impares
-    ]);
-
-    doc.autoTable({
-      startY: 36,
-      head: [['#', 'Dezenas Selecionadas (Volante)', 'Primos', 'Moldura', 'Soma', 'Ímpares']],
-      body: tableData,
-      theme: 'grid',
-      headStyles: { fillColor: [108, 10, 99], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
-      styles: { fontSize: 10, halign: 'center', cellPadding: 5 },
-      columnStyles: { 0: { cellWidth: 20 }, 1: { halising: 'left', fontStyle: 'bold', cellWidth: 90 } },
-      alternateRowStyles: { fillColor: [248, 249, 250] }
-    });
-
-    doc.save("loto_rico_jogos_otimizados.pdf");
-  };
-
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-slate-800 font-sans pb-16 selection:bg-[#6c0a63] selection:text-white">
-      {/* Header Oficial Loto Rico - Roxo Caixa com fundo limpo */}
-      <header className="bg-gradient-to-r from-[#5a189a] via-[#6c0a63] to-[#7b2cbf] text-white border-b border-purple-900/10 sticky top-0 z-50 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-5 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center space-x-3.5">
-            <div className="bg-white/10 p-3 rounded-2xl shadow-inner backdrop-blur-sm border border-white/20">
-              <Trophy className="w-7 h-7 text-amber-300" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-white drop-shadow">
-                LOTO RICO
-              </h1>
-              <p className="text-xs text-purple-200 font-medium tracking-wide">Inteligência e Geração de Fechamentos para a Lotofácil</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 text-xs font-bold text-white shadow-sm">
-            <Sparkles className="w-4 h-4 text-amber-300" />
-            <span>Padrão Oficial Caixa</span>
-          </div>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f4f5f7', color: '#1f2937', fontFamily: 'Arial, sans-serif', paddingBottom: '40px' }}>
+      
+      {/* Header Roxo Caixa */}
+      <header style={{ background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', padding: '20px 30px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 'bold', letterSpacing: '1px' }}>LOTO RICO</h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#e9d5ff' }}>Inteligência e Geração de Fechamentos para a Lotofácil</p>
+        </div>
+        <div style={{ backgroundColor: 'rgba(255,255,255,0.15)', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', border: '1px solid rgba(255,255,255,0.2)' }}>
+          ✨ Padrão Oficial Caixa
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 mt-8 space-y-8">
+      <main style={{ maxWidth: '1200px', margin: '30px auto', padding: '0 20px' }}>
         
-        {/* Painel de Controle e Filtros */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Bloco de Configurações */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '25px' }}>
           
-          {/* Parâmetros Básicos */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-2.5 mb-5 text-[#6c0a63] font-bold border-b border-slate-100 pb-3">
-                <Settings className="w-5 h-5 text-[#6c0a63]" />
-                <h2 className="text-base">Parâmetros de Geração</h2>
-              </div>
+          {/* Parâmetros */}
+          <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#6c0a63', marginTop: 0, marginBottom: '20px', borderBottom: '2px solid #f3e8ff', paddingBottom: '8px' }}>
+              ⚙️ Parâmetros de Geração
+            </h2>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Quantidade de Jogos</label>
-                  <input 
-                    type="number" 
-                    min="1" 
-                    max="100" 
-                    value={qtdJogos} 
-                    onChange={(e) => setQtdJogos(parseInt(e.target.value) || 1)}
-                    className="w-full bg-[#f8f9fa] border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:border-[#6c0a63] focus:ring-2 focus:ring-[#6c0a63]/20 transition-all text-base"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Concurso Alvo (Opcional)</label>
-                  <input 
-                    type="text" 
-                    placeholder="Ex: 3150" 
-                    value={concursoAlvo} 
-                    onChange={(e) => setConcursoAlvo(e.target.value)}
-                    className="w-full bg-[#f8f9fa] border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-bold focus:outline-none focus:border-[#6c0a63] focus:ring-2 focus:ring-[#6c0a63]/20 transition-all text-base"
-                  />
-                </div>
-              </div>
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Quantidade de Jogos</label>
+              <input 
+                type="number" 
+                min="1" 
+                max="100" 
+                value={qtdJogos} 
+                onChange={(e) => setQtdJogos(parseInt(e.target.value) || 1)}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', backgroundColor: '#f9fafb', fontSize: '14px', fontWeight: 'bold', boxSizing: 'border-box' }}
+              />
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500 flex items-start gap-2.5">
-              <Info className="w-4 h-4 text-[#6c0a63] shrink-0 mt-0.5" />
-              <span>Configure os filtros estratégicos ao lado para gerar combinações perfeitamente balanceadas.</span>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Concurso Alvo (Opcional)</label>
+              <input 
+                type="text" 
+                placeholder="Ex: 3150" 
+                value={concursoAlvo} 
+                onChange={(e) => setConcursoAlvo(e.target.value)}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', backgroundColor: '#f9fafb', fontSize: '14px', fontWeight: 'bold', boxSizing: 'border-box' }}
+              />
             </div>
           </div>
 
           {/* Filtros Modulares */}
-          <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5 border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2.5 text-[#6c0a63] font-bold">
-                  <Sliders className="w-5 h-5 text-[#6c0a63]" />
-                  <h2 className="text-base">Filtros e Estratégias Modulares</h2>
+          <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', gridColumn: 'span 2' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #f3e8ff', paddingBottom: '8px', flexWrap: 'wrap', gap: '10px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#6c0a63', margin: 0 }}>
+                🎛️ Filtros e Estratégias Modulares
+              </h2>
+              <div>
+                <button onClick={marcarTodas} style={{ background: '#f3e8ff', color: '#6c0a63', border: '1px solid #d8b4fe', padding: '5px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', marginRight: '6px' }}>Marcar Todas</button>
+                <button onClick={desmarcarTodas} style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '5px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>Desmarcar Todas</button>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginBottom: '15px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '10px', border: filtroPrimos ? '1px solid #6c0a63' : '1px solid #e5e7eb', backgroundColor: filtroPrimos ? '#fdf4ff' : '#f9fafb', cursor: 'pointer' }}>
+                <input type="checkbox" checked={filtroPrimos} onChange={(e) => setFiltroPrimos(e.target.checked)} style={{ accentColor: '#6c0a63', width: '16px', height: '16px' }} />
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 'bold' }}>Números Primos</div>
+                  <div style={{ fontSize: '11px', color: '#6b7280' }}>4 a 6 primos</div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={marcarTodas} className="text-xs bg-purple-50 hover:bg-purple-100 text-[#6c0a63] px-3.5 py-1.5 rounded-xl border border-purple-200 transition-all font-semibold cursor-pointer shadow-sm">
-                    Marcar Todas
-                  </button>
-                  <button onClick={desmarcarTodas} className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-1.5 rounded-xl border border-slate-200 transition-all font-semibold cursor-pointer shadow-sm">
-                    Desmarcar Todas
-                  </button>
+              </label>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '10px', border: filtroMoldura ? '1px solid #6c0a63' : '1px solid #e5e7eb', backgroundColor: filtroMoldura ? '#fdf4ff' : '#f9fafb', cursor: 'pointer' }}>
+                <input type="checkbox" checked={filtroMoldura} onChange={(e) => setFiltroMoldura(e.target.checked)} style={{ accentColor: '#6c0a63', width: '16px', height: '16px' }} />
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 'bold' }}>Moldura & Miolo</div>
+                  <div style={{ fontSize: '11px', color: '#6b7280' }}>8 a 10 na borda</div>
                 </div>
-              </div>
+              </label>
 
-              {/* Grid de Checkboxes */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 my-2">
-                
-                <label className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer shadow-sm ${filtroPrimos ? 'bg-purple-50/70 border-[#6c0a63] text-slate-900 shadow-purple-950/5' : 'bg-[#f8f9fa] border-slate-200 text-slate-500'}`}>
-                  <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={filtroPrimos} onChange={(e) => setFiltroPrimos(e.target.checked)} className="w-4 h-4 accent-[#6c0a63] rounded cursor-pointer" />
-                    <div>
-                      <p className="text-sm font-bold">Números Primos</p>
-                      <p className="text-xs text-slate-500">Padrão ideal: 4 a 6 primos</p>
-                    </div>
-                  </div>
-                  {filtroPrimos && <CheckCircle2 className="w-4 h-4 text-[#6c0a63]" />}
-                </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '10px', border: filtroSoma ? '1px solid #6c0a63' : '1px solid #e5e7eb', backgroundColor: filtroSoma ? '#fdf4ff' : '#f9fafb', cursor: 'pointer' }}>
+                <input type="checkbox" checked={filtroSoma} onChange={(e) => setFiltroSoma(e.target.checked)} style={{ accentColor: '#6c0a63', width: '16px', height: '16px' }} />
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 'bold' }}>Soma Total</div>
+                  <div style={{ fontSize: '11px', color: '#6b7280' }}>180 a 220</div>
+                </div>
+              </label>
 
-                <label className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer shadow-sm ${filtroMoldura ? 'bg-purple-50/70 border-[#6c0a63] text-slate-900 shadow-purple-950/5' : 'bg-[#f8f9fa] border-slate-200 text-slate-500'}`}>
-                  <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={filtroMoldura} onChange={(e) => setFiltroMoldura(e.target.checked)} className="w-4 h-4 accent-[#6c0a63] rounded cursor-pointer" />
-                    <div>
-                      <p className="text-sm font-bold">Moldura & Miolo</p>
-                      <p className="text-xs text-slate-500">Padrão ideal: 8 a 10 na borda</p>
-                    </div>
-                  </div>
-                  {filtroMoldura && <CheckCircle2 className="w-4 h-4 text-[#6c0a63]" />}
-                </label>
-
-                <label className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer shadow-sm ${filtroSoma ? 'bg-purple-50/70 border-[#6c0a63] text-slate-900 shadow-purple-950/5' : 'bg-[#f8f9fa] border-slate-200 text-slate-500'}`}>
-                  <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={filtroSoma} onChange={(e) => setFiltroSoma(e.target.checked)} className="w-4 h-4 accent-[#6c0a63] rounded cursor-pointer" />
-                    <div>
-                      <p className="text-sm font-bold">Soma Total Equilibrada</p>
-                      <p className="text-xs text-slate-500">Padrão ideal: 180 a 220</p>
-                    </div>
-                  </div>
-                  {filtroSoma && <CheckCircle2 className="w-4 h-4 text-[#6c0a63]" />}
-                </label>
-
-                <label className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer shadow-sm ${filtroImpares ? 'bg-purple-50/70 border-[#6c0a63] text-slate-900 shadow-purple-950/5' : 'bg-[#f8f9fa] border-slate-200 text-slate-500'}`}>
-                  <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={filtroImpares} onChange={(e) => setFiltroImpares(e.target.checked)} className="w-4 h-4 accent-[#6c0a63] rounded cursor-pointer" />
-                    <div>
-                      <p className="text-sm font-bold">Ímpares / Pares</p>
-                      <p className="text-xs text-slate-500">Padrão ideal: 7 a 9 ímpares</p>
-                    </div>
-                  </div>
-                  {filtroImpares && <CheckCircle2 className="w-4 h-4 text-[#6c0a63]" />}
-                </label>
-
-              </div>
-
-              {/* Filtro Últimos 2 Concursos */}
-              <div className={`mt-3.5 p-4 rounded-xl border transition-all shadow-sm ${filtroUltimosDois ? 'bg-purple-50/70 border-[#6c0a63]' : 'bg-[#f8f9fa] border-slate-200'}`}>
-                <label className="flex items-center justify-between cursor-pointer mb-2">
-                  <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={filtroUltimosDois} onChange={(e) => setFiltroUltimosDois(e.target.checked)} className="w-4 h-4 accent-[#6c0a63] rounded cursor-pointer" />
-                    <div>
-                      <p className="text-sm font-bold text-slate-900">Análise dos Últimos 2 Concursos Anteriores</p>
-                      <p className="text-xs text-slate-500">Filtra repetições com base nos 2 concursos imediatamente anteriores</p>
-                    </div>
-                  </div>
-                  {filtroUltimosDois && <CheckCircle2 className="w-4 h-4 text-[#6c0a63]" />}
-                </label>
-
-                {filtroUltimosDois && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-3 border-t border-purple-200/60">
-                    <div>
-                      <label className="block text-[11px] uppercase tracking-wider text-[#6c0a63] mb-1 font-bold">Concurso N-1 (Dezenas)</label>
-                      <input 
-                        type="text" 
-                        value={concursoAnterior1} 
-                        onChange={(e) => setConcursoAnterior1(e.target.value)}
-                        className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-[#6c0a63]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] uppercase tracking-wider text-[#6c0a63] mb-1 font-bold">Concurso N-2 (Dezenas)</label>
-                      <input 
-                        type="text" 
-                        value={concursoAnterior2} 
-                        onChange={(e) => setConcursoAnterior2(e.target.value)}
-                        className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-[#6c0a63]"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '10px', border: filtroImpares ? '1px solid #6c0a63' : '1px solid #e5e7eb', backgroundColor: filtroImpares ? '#fdf4ff' : '#f9fafb', cursor: 'pointer' }}>
+                <input type="checkbox" checked={filtroImpares} onChange={(e) => setFiltroImpares(e.target.checked)} style={{ accentColor: '#6c0a63', width: '16px', height: '16px' }} />
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 'bold' }}>Ímpares / Pares</div>
+                  <div style={{ fontSize: '11px', color: '#6b7280' }}>7 a 9 ímpares</div>
+                </div>
+              </label>
             </div>
 
             {/* Botão de Geração */}
-            <div className="mt-6">
-              <button 
-                onClick={handleGerarJogos}
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-[#5a189a] via-[#6c0a63] to-[#7b2cbf] hover:from-[#6c0a63] hover:to-[#5a189a] text-white font-extrabold py-4 px-6 rounded-xl shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2.5 transition-all transform active:scale-[0.99] disabled:opacity-50 cursor-pointer text-base"
-              >
-                {loading ? (
-                  <>
-                    <RefreshCw className="w-5 h-5 animate-spin text-white" />
-                    <span>Processando Fechamento...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5 text-amber-300" />
-                    <span>Gerar Jogos Otimizados</span>
-                  </>
-                )}
-              </button>
-            </div>
+            <button 
+              onClick={handleGerarJogos}
+              disabled={loading}
+              style={{ width: '100%', background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(108,10,99,0.3)', marginTop: '10px' }}
+            >
+              {loading ? 'Processando Fechamento...' : '✨ Gerar Jogos Otimizados'}
+            </button>
           </div>
 
         </div>
 
-        {/* Estatísticas do Fechamento */}
+        {/* Estatísticas */}
         {estatisticas && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white border border-slate-200 p-4 rounded-xl text-center shadow-sm">
-              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Jogos Gerados</p>
-              <p className="text-2xl font-black text-[#6c0a63] mt-1">{estatisticas.total}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '25px' }}>
+            <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
+              <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: 'bold', textTransform: 'uppercase' }}>Jogos Gerados</div>
+              <div style={{ fontSize: '24px', fontWeight: '900', color: '#6c0a63', marginTop: '4px' }}>{estatisticas.total}</div>
             </div>
-            <div className="bg-white border border-slate-200 p-4 rounded-xl text-center shadow-sm">
-              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Média de Soma</p>
-              <p className="text-2xl font-black text-slate-800 mt-1">{estatisticas.mediaSoma}</p>
+            <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
+              <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: 'bold', textTransform: 'uppercase' }}>Média de Soma</div>
+              <div style={{ fontSize: '24px', fontWeight: '900', color: '#1f2937', marginTop: '4px' }}>{estatisticas.mediaSoma}</div>
             </div>
-            <div className="bg-white border border-slate-200 p-4 rounded-xl text-center shadow-sm">
-              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Média de Primos</p>
-              <p className="text-2xl font-black text-slate-800 mt-1">{estatisticas.mediaPrimos}</p>
+            <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
+              <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: 'bold', textTransform: 'uppercase' }}>Média de Primos</div>
+              <div style={{ fontSize: '24px', fontWeight: '900', color: '#1f2937', marginTop: '4px' }}>{estatisticas.mediaPrimos}</div>
             </div>
-            <div className="bg-white border border-slate-200 p-4 rounded-xl text-center shadow-sm">
-              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Média na Moldura</p>
-              <p className="text-2xl font-black text-slate-800 mt-1">{estatisticas.mediaMoldura}</p>
+            <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
+              <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: 'bold', textTransform: 'uppercase' }}>Média na Moldura</div>
+              <div style={{ fontSize: '24px', fontWeight: '900', color: '#1f2937', marginTop: '4px' }}>{estatisticas.mediaMoldura}</div>
             </div>
           </div>
         )}
 
-        {/* Tabela de Jogos Gerados com Volantes Estilizados */}
+        {/* Tabela de Jogos */}
         {jogosGerados.length > 0 && (
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2.5">
-                  <Layers className="w-5 h-5 text-[#6c0a63]" />
-                  <span>Fechamento Estratégico Gerado</span>
-                </h3>
-                <p className="text-xs text-slate-500">Dezenas validadas conforme o padrão oficial da Lotofácil</p>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={exportarExcel}
-                  className="bg-[#f8f9fa] hover:bg-slate-100 text-[#6c0a63] border border-slate-200 text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm cursor-pointer"
-                >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                  <span>Exportar Excel</span>
-                </button>
-                <button 
-                  onClick={exportarPDF}
-                  className="bg-[#f8f9fa] hover:bg-slate-100 text-[#6c0a63] border border-slate-200 text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm cursor-pointer"
-                >
-                  <FileText className="w-4 h-4 text-rose-600" />
-                  <span>Exportar PDF</span>
-                </button>
-              </div>
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+            <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#1f2937' }}>📊 Fechamento Estratégico Gerado</h3>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
-                  <tr className="bg-[#f8f9fa] text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200">
-                    <th className="py-3.5 px-4 font-bold text-center w-16">#</th>
-                    <th className="py-3.5 px-4 font-bold">Dezenas Selecionadas (Volante Lotofácil)</th>
-                    <th className="py-3.5 px-4 font-bold text-center">Primos</th>
-                    <th className="py-3.5 px-4 font-bold text-center">Moldura</th>
-                    <th className="py-3.5 px-4 font-bold text-center">Soma</th>
-                    <th className="py-3.5 px-4 font-bold text-center">Ímpares</th>
+                  <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb', fontSize: '12px', color: '#4b5563', textTransform: 'uppercase' }}>
+                    <th style={{ padding: '14px', textAlign: 'center', width: '60px' }}>#</th>
+                    <th style={{ padding: '14px' }}>Dezenas Selecionadas (Volante Lotofácil)</th>
+                    <th style={{ padding: '14px', textAlign: 'center' }}>Primos</th>
+                    <th style={{ padding: '14px', textAlign: 'center' }}>Moldura</th>
+                    <th style={{ padding: '14px', textAlign: 'center' }}>Soma</th>
+                    <th style={{ padding: '14px', textAlign: 'center' }}>Ímpares</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-sm">
+                <tbody>
                   {jogosGerados.map((jogo) => (
-                    <tr key={jogo.id} className="hover:bg-purple-50/40 transition-colors">
-                      <td className="py-4 px-4 text-center font-mono text-xs text-[#6c0a63] font-bold">
+                    <tr key={jogo.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold', color: '#6c0a63', fontSize: '13px' }}>
                         {String(jogo.id).padStart(2, '0')}
                       </td>
-                      <td className="py-4 px-4">
-                        <div className="flex flex-wrap gap-1.5">
+                      <td style={{ padding: '14px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                           {jogo.numeros.map((num, idx) => (
                             <span 
                               key={idx} 
-                              className="w-8 h-8 flex items-center justify-center bg-[#f8f9fa] border border-slate-200 rounded-lg text-xs font-black text-slate-800 shadow-sm"
+                              style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '12px', fontWeight: '900', color: '#1f2937', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
                             >
                               {String(num).padStart(2, '0')}
                             </span>
                           ))}
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-center font-bold text-slate-700">{jogo.primos}</td>
-                      <td className="py-4 px-4 text-center font-bold text-slate-700">{jogo.moldura}</td>
-                      <td className="py-4 px-4 text-center font-bold text-slate-700">{jogo.soma}</td>
-                      <td className="py-4 px-4 text-center font-bold text-slate-700">{jogo.impares}</td>
+                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>{jogo.primos}</td>
+                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>{jogo.moldura}</td>
+                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>{jogo.soma}</td>
+                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>{jogo.impares}</td>
                     </tr>
                   ))}
                 </tbody>
