@@ -11,7 +11,7 @@ export default function App() {
   const [filtroMoldura, setFiltroMoldura] = useState(true);
   const [filtroSoma, setFiltroSoma] = useState(true);
   const [filtroImpares, setFiltroImpares] = useState(true);
-  const [filtroUltimosDois, setFiltroUltimosDois] = useState(false);
+  const [filtroUltimosDois, setFiltroUltimosDois] = useState(true);
 
   const [jogosGerados, setJogosGerados] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -40,6 +40,7 @@ export default function App() {
   };
 
   const validarFiltros = (jogo) => {
+    // Cada filtro atua de forma independente: só valida se estiver ativo (true)
     if (filtroPrimos) {
       const p = contarPrimos(jogo);
       if (p < 4 || p > 6) return false;
@@ -74,7 +75,7 @@ export default function App() {
     setTimeout(() => {
       const novosJogos = [];
       let tentativas = 0;
-      const maxTentativas = 50000;
+      const maxTentativas = 100000;
 
       while (novosJogos.length < qtdJogos && tentativas < maxTentativas) {
         tentativas++;
@@ -171,11 +172,11 @@ export default function App() {
             </div>
           </div>
 
-          {/* Filtros Modulares */}
+          {/* Filtros Modulares Independentes */}
           <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', gridColumn: 'span 2' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #f3e8ff', paddingBottom: '8px', flexWrap: 'wrap', gap: '10px' }}>
               <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#6c0a63', margin: 0 }}>
-                🎛️ Filtros e Estratégias Modulares
+                🎛️ Filtros Modulares (Isolados ou Combinados)
               </h2>
               <div>
                 <button onClick={marcarTodas} style={{ background: '#f3e8ff', color: '#6c0a63', border: '1px solid #d8b4fe', padding: '5px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', marginRight: '6px' }}>Marcar Todas</button>
@@ -217,11 +218,46 @@ export default function App() {
               </label>
             </div>
 
+            {/* Estratégia dos Dois Últimos Concursos */}
+            <div style={{ padding: '14px', borderRadius: '10px', border: filtroUltimosDois ? '1px solid #6c0a63' : '1px solid #e5e7eb', backgroundColor: filtroUltimosDois ? '#fdf4ff' : '#f9fafb', marginBottom: '15px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginBottom: filtroUltimosDois ? '10px' : '0' }}>
+                <input type="checkbox" checked={filtroUltimosDois} onChange={(e) => setFiltroUltimosDois(e.target.checked)} style={{ accentColor: '#6c0a63', width: '16px', height: '16px' }} />
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 'bold' }}>Análise dos Últimos 2 Concursos Anteriores</div>
+                  <div style={{ fontSize: '11px', color: '#6b7280' }}>Filtra repetições com base nos 2 concursos imediatamente anteriores</div>
+                </div>
+              </label>
+
+              {filtroUltimosDois && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #e9d5ff' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#6c0a63', marginBottom: '4px' }}>Concurso N-1</label>
+                    <input 
+                      type="text" 
+                      value={concursoAnterior1} 
+                      onChange={(e) => setConcursoAnterior1(e.target.value)}
+                      style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#ffffff', fontSize: '12px', fontFamily: 'monospace', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#6c0a63', marginBottom: '4px' }}>Concurso N-2</label>
+                    <input 
+                      type="text" 
+                      value={concursoAnterior2} 
+                      onChange={(e) => setConcursoAnterior2(e.target.value)}
+                      style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#ffffff', fontSize: '12px', fontFamily: 'monospace', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Botão de Geração */}
             <button 
+              handleGerarJogos
               onClick={handleGerarJogos}
               disabled={loading}
-              style={{ width: '100%', background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(108,10,99,0.3)', marginTop: '10px' }}
+              style={{ width: '100%', background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(108,10,99,0.3)' }}
             >
               {loading ? 'Processando Fechamento...' : '✨ Gerar Jogos Otimizados'}
             </button>
