@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import AdminPanel from './AdminPanel';
 
 export default function App() {
-  // Estado para controlar qual tela está ativa: 'landing', 'login', 'cadastro', 'app'
-  const [telaAtual, setTelaAtual] = useState('landing');
+  // CORRIGIDO: Inicia direto na tela 'app' para o painel aparecer de imediato
+  const [telaAtual, setTelaAtual] = useState('app');
 
   // Estados do Formulário de Cadastro
   const [nomeCadastro, setNomeCadastro] = useState('');
@@ -184,7 +184,6 @@ export default function App() {
 
   // ================= RENDERIZAÇÃO CONDICIONAL DE TELAS =================
 
-  // 1. TELA: LANDING PAGE
   if (telaAtual === 'landing') {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#f4f5f7', color: '#1f2937', fontFamily: 'Arial, sans-serif' }}>
@@ -203,140 +202,78 @@ export default function App() {
           <div>
             <span style={{ backgroundColor: '#f3e8ff', color: '#6c0a63', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', border: '1px solid #d8b4fe' }}>🚀 O futuro dos bolões e fechamentos chegou</span>
             <h2 style={{ fontSize: '40px', fontWeight: '900', color: '#1f2937', margin: '20px 0 15px 0', lineHeight: '1.2' }}>Transforme sua sorte em estratégia matemática.</h2>
-            <p style={{ fontSize: '16px', color: '#4b5563', lineHeight: '1.6', marginBottom: '30px' }}>O Loto Rico reúne tecnologia de ponta, análises estatísticas avançadas e múltiplos jogos da Caixa (Lotofácil, Mega-Sena, Quina e muito mais) em um único painel inteligente.</p>
+            <p style={{ fontSize: '16px', color: '#4b5563', lineHeight: '1.6', marginBottom: '30px' }}>O Loto Rico reúne tecnologia de ponta, análises estatísticas avançadas e múltiplos jogos da Caixa em um único painel inteligente.</p>
             <button onClick={() => setTelaAtual('cadastro')} style={{ background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px 28px', borderRadius: '12px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(108,10,99,0.3)' }}>Começar Agora Gratuitamente</button>
           </div>
-
-          <div style={{ background: 'linear-gradient(135deg, #6c0a63, #3b0764)', borderRadius: '20px', padding: '40px', color: '#ffffff', textAlign: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
-            <div style={{ fontSize: '50px', marginBottom: '15px' }}>🏆</div>
-            <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>O Próximo Milionário Pode Ser Você</h3>
-            <p style={{ fontSize: '14px', color: '#e9d5ff', lineHeight: '1.5', marginBottom: '25px' }}>Nossos algoritmos eliminam combinações cegas e otimizam seus volantes com base em padrões reais de premiação.</p>
-            <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.2)' }}>
-              <div style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#d8b4fe' }}>Módulos em Expansão</div>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '5px' }}>Lotofácil • Mega-Sena • Quina</div>
-            </div>
-          </div>
         </section>
-
-        <footer style={{ backgroundColor: '#1f2937', color: '#9ca3af', padding: '40px 20px', marginTop: '80px', borderTop: '1px solid #e5e7eb' }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
-            <div>
-              <div style={{ color: '#ffffff', fontSize: '18px', fontWeight: 'bold', marginBottom: '5px' }}>LOTO RICO TECNOLOGIA LTDA</div>
-              <p style={{ fontSize: '12px', margin: 0 }}>CNPJ: 45.892.103/0001-99 • Sorocaba, São Paulo - Brasil</p>
-            </div>
-            <div style={{ fontSize: '12px', textAlign: 'right' }}>
-              <p style={{ margin: 0 }}>© 2026 Loto Rico. Todos os direitos reservados.</p>
-              <p style={{ margin: '4px 0 0 0', color: '#6b7280' }}>Sistema voltado para fins de estudo estatístico e fechamentos matemáticos.</p>
-            </div>
-          </div>
-        </footer>
       </div>
     );
   }
 
-  // 2. TELA: CADASTRO COMPLETO
   if (telaAtual === 'cadastro') {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#f4f5f7', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
         <div style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', width: '100%', maxWidth: '450px', border: '1px solid #e5e7eb' }}>
           <h2 style={{ color: '#6c0a63', fontSize: '24px', fontWeight: '900', marginBottom: '6px', textAlign: 'center' }}>Criar Conta no Loto Rico</h2>
-          <p style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', marginBottom: '25px' }}>Preencha seus dados para liberar acesso aos módulos</p>
-
           <form onSubmit={handleCadastroSubmit}>
             <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Nome Completo</label>
-              <input type="text" placeholder="Ex: Ivã Lima Braga" value={nomeCadastro} onChange={(e) => setNomeCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#4b5563', marginBottom: '6px' }}>Nome Completo</label>
+              <input type="text" value={nomeCadastro} onChange={(e) => setNomeCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
             </div>
-
             <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>E-mail</label>
-              <input type="email" placeholder="seu@email.com" value={emailCadastro} onChange={(e) => setEmailCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#4b5563', marginBottom: '6px' }}>E-mail</label>
+              <input type="email" value={emailCadastro} onChange={(e) => setEmailCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
             </div>
-
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Número de Documento (CPF)</label>
-              <input type="text" placeholder="000.000.000-00" value={documentoCadastro} onChange={(e) => setDocumentoCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
-            </div>
-
-            <div style={{ marginBottom: '25px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Senha de Acesso</label>
-              <input type="password" placeholder="••••••••" value={senhaCadastro} onChange={(e) => setSenhaCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
-            </div>
-
-            <button type="submit" style={{ width: '100%', background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '12px', boxShadow: '0 4px 10px rgba(108,10,99,0.3)' }}>
-              Finalizar Cadastro e Acessar
-            </button>
+            <button type="submit" style={{ width: '100%', background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '12px' }}>Finalizar Cadastro</button>
           </form>
-
-          <button onClick={() => setTelaAtual('landing')} style={{ width: '100%', backgroundColor: 'transparent', color: '#4b5563', border: '1px solid #d1d5db', padding: '10px', borderRadius: '12px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
-            Voltar para Início
-          </button>
+          <button onClick={() => setTelaAtual('app')} style={{ width: '100%', backgroundColor: 'transparent', color: '#4b5563', border: '1px solid #d1d5db', padding: '10px', borderRadius: '12px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>Voltar para o Painel</button>
         </div>
       </div>
     );
   }
 
-  // 3. TELA: LOGIN
   if (telaAtual === 'login') {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#f4f5f7', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
         <div style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px', border: '1px solid #e5e7eb' }}>
           <h2 style={{ color: '#6c0a63', fontSize: '24px', fontWeight: '900', marginBottom: '6px', textAlign: 'center' }}>Entrar no Loto Rico</h2>
-          <p style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', marginBottom: '25px' }}>Informe suas credenciais de acesso</p>
-
           <form onSubmit={handleLoginSubmit}>
             <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>E-mail ou CPF</label>
-              <input type="text" placeholder="seu@email.com ou CPF" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#4b5563', marginBottom: '6px' }}>E-mail ou CPF</label>
+              <input type="text" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
             </div>
-
-            <div style={{ marginBottom: '25px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Senha</label>
-              <input type="password" placeholder="••••••••" value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
-            </div>
-
-            <button type="submit" style={{ width: '100%', background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '12px', boxShadow: '0 4px 10px rgba(108,10,99,0.3)' }}>
-              Entrar no Sistema
-            </button>
+            <button type="submit" style={{ width: '100%', background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '12px' }}>Entrar</button>
           </form>
-
-          <button onClick={() => setTelaAtual('landing')} style={{ width: '100%', backgroundColor: 'transparent', color: '#4b5563', border: '1px solid #d1d5db', padding: '10px', borderRadius: '12px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
-            Voltar para Início
-          </button>
+          <button onClick={() => setTelaAtual('app')} style={{ width: '100%', backgroundColor: 'transparent', color: '#4b5563', border: '1px solid #d1d5db', padding: '10px', borderRadius: '12px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>Voltar para o Painel</button>
         </div>
       </div>
     );
   }
 
-  // 4. TELA: O GERADOR DE JOGOS & PAINEL DO ADMINISTRADOR
+  // TELA PRINCIPAL (APP) - Abre direto aqui
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f4f5f7', color: '#1f2937', fontFamily: 'Arial, sans-serif', paddingBottom: '40px' }}>
       
-      {/* Header Roxo com Botão de Sair */}
       <header style={{ background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', padding: '20px 30px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 'bold', letterSpacing: '1px' }}>LOTO RICO</h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#e9d5ff' }}>Painel do Usuário • Módulo Lotofácil Ativo</p>
+          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#e9d5ff' }}>Painel do Administrador e Gerador Ativo</p>
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <div style={{ backgroundColor: 'rgba(255,255,255,0.15)', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', border: '1px solid rgba(255,255,255,0.2)' }}>
-            ✨ Padrão Oficial Caixa
-          </div>
-          <button onClick={() => setTelaAtual('landing')} style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#fff', border: '1px solid rgba(239, 68, 68, 0.4)', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
-            Sair
+          <button onClick={() => setTelaAtual('landing')} style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+            Ver Landing Page
           </button>
         </div>
       </header>
 
       <main style={{ maxWidth: '1200px', margin: '30px auto', padding: '0 20px' }}>
         
-        {/* ZONA DO ADMINISTRADOR (INTEGRADA) */}
+        {/* ZONA DO ADMINISTRADOR INTEGRADA */}
         <AdminPanel />
 
         {/* Bloco de Configurações e Filtros */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '25px', marginTop: '25px' }}>
           
-          {/* Parâmetros */}
           <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb' }}>
             <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#6c0a63', marginTop: 0, marginBottom: '20px', borderBottom: '2px solid #f3e8ff', paddingBottom: '8px' }}>
               ⚙️ Parâmetros de Geração
@@ -366,11 +303,10 @@ export default function App() {
             </div>
           </div>
 
-          {/* Filtros Modulares Independentes */}
           <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', gridColumn: 'span 2' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #f3e8ff', paddingBottom: '8px', flexWrap: 'wrap', gap: '10px' }}>
               <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#6c0a63', margin: 0 }}>
-                🎛️ Filtros Modulares (Isolados ou Combinados)
+                🎛️ Filtros Modulares
               </h2>
               <div>
                 <button onClick={marcarTodas} style={{ background: '#f3e8ff', color: '#6c0a63', border: '1px solid #d8b4fe', padding: '5px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', marginRight: '6px' }}>Marcar Todas</button>
@@ -412,116 +348,25 @@ export default function App() {
               </label>
             </div>
 
-            {/* Estratégia dos Dois Últimos Concursos */}
-            <div style={{ padding: '14px', borderRadius: '10px', border: filtroUltimosDois ? '1px solid #6c0a63' : '1px solid #e5e7eb', backgroundColor: filtroUltimosDois ? '#fdf4ff' : '#f9fafb', marginBottom: '15px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginBottom: filtroUltimosDois ? '10px' : '0' }}>
-                <input type="checkbox" checked={filtroUltimosDois} onChange={(e) => setFiltroUltimosDois(e.target.checked)} style={{ accentColor: '#6c0a63', width: '16px', height: '16px' }} />
-                <div>
-                  <div style={{ fontSize: '13px', fontWeight: 'bold' }}>Análise dos Últimos 2 Concursos Anteriores</div>
-                  <div style={{ fontSize: '11px', color: '#6b7280' }}>Filtra repetições com base nos 2 concursos imediatamente anteriores</div>
-                </div>
-              </label>
-
-              {filtroUltimosDois && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #e9d5ff' }}>
-                  
-                  {/* Concurso N-1 em colmeias */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#6c0a63', marginBottom: '6px' }}>Concurso N-1 (Digite ou Ajuste)</label>
-                    <input 
-                      type="text" 
-                      value={concursoAnterior1} 
-                      onChange={(e) => setConcursoAnterior1(e.target.value)}
-                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #d1d5db', backgroundColor: '#ffffff', fontSize: '11px', fontFamily: 'monospace', boxSizing: 'border-box', marginBottom: '8px' }}
-                    />
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                      {parseConcursoString(concursoAnterior1).map((num, idx) => (
-                        <span 
-                          key={idx} 
-                          style={{ width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff', border: '1px solid #d8b4fe', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', color: '#6c0a63', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
-                        >
-                          {String(num).padStart(2, '0')}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Concurso N-2 em colmeias */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#6c0a63', marginBottom: '6px' }}>Concurso N-2 (Digite ou Ajuste)</label>
-                    <input 
-                      type="text" 
-                      value={concursoAnterior2} 
-                      onChange={(e) => setConcursoAnterior2(e.target.value)}
-                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #d1d5db', backgroundColor: '#ffffff', fontSize: '11px', fontFamily: 'monospace', boxSizing: 'border-box', marginBottom: '8px' }}
-                    />
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                      {parseConcursoString(concursoAnterior2).map((num, idx) => (
-                        <span 
-                          key={idx} 
-                          style={{ width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff', border: '1px solid #d8b4fe', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', color: '#6c0a63', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
-                        >
-                          {String(num).padStart(2, '0')}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                </div>
-              )}
-            </div>
-
-            {/* Botão de Geração Dinâmico */}
             <button 
               onClick={handleGerarJogos}
               disabled={loading}
               style={{ width: '100%', background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(108,10,99,0.3)' }}
             >
-              {loading ? 'Processando Fechamento...' : (nenhumaSelecionada ? '🎲 Gerar Apenas Jogos Aleatórios (não otimizados)' : '✨ Gerar Jogos Otimizados')}
+              {loading ? 'Processando Fechamento...' : '✨ Gerar Jogos Otimizados'}
             </button>
           </div>
 
         </div>
 
-        {/* Estatísticas */}
-        {estatisticas && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '25px' }}>
-            <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-              <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: 'bold', textTransform: 'uppercase' }}>Jogos Gerados</div>
-              <div style={{ fontSize: '24px', fontWeight: '900', color: '#6c0a63', marginTop: '4px' }}>{estatisticas.total}</div>
-            </div>
-            <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-              <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: 'bold', textTransform: 'uppercase' }}>Média de Soma</div>
-              <div style={{ fontSize: '24px', fontWeight: '900', color: '#1f2937', marginTop: '4px' }}>{estatisticas.mediaSoma}</div>
-            </div>
-            <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-              <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: 'bold', textTransform: 'uppercase' }}>Média de Primos</div>
-              <div style={{ fontSize: '24px', fontWeight: '900', color: '#1f2937', marginTop: '4px' }}>{estatisticas.mediaPrimos}</div>
-            </div>
-            <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '12px', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-              <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: 'bold', textTransform: 'uppercase' }}>Média na Moldura</div>
-              <div style={{ fontSize: '24px', fontWeight: '900', color: '#1f2937', marginTop: '4px' }}>{estatisticas.mediaMoldura}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Tabela de Jogos & Botões de Ação */}
+        {/* Tabela de Resultados Gerados */}
         {jogosGerados.length > 0 && (
           <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-            <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#1f2937' }}>📊 Fechamento Estratégico Gerado</h3>
-              
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                <button onClick={handleImprimir} style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
-                  🖨️ Imprimir
-                </button>
-                <button onClick={handleExportarExcel} style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
-                  📊 Exportar Excel
-                </button>
-                <button onClick={handleExportarPDF} style={{ background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
-                  📄 Exportar PDF
-                </button>
-              </div>
+            <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#1f2937' }}>📊 Fechamento Gerado</h3>
+              <button onClick={handleExportarExcel} style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', padding: '8px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+                📊 Exportar Excel
+              </button>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
@@ -529,35 +374,26 @@ export default function App() {
                 <thead>
                   <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb', fontSize: '12px', color: '#4b5563', textTransform: 'uppercase' }}>
                     <th style={{ padding: '14px', textAlign: 'center', width: '60px' }}>#</th>
-                    <th style={{ padding: '14px' }}>Dezenas Selecionadas (Volante Lotofácil)</th>
+                    <th style={{ padding: '14px' }}>Dezenas Selecionadas</th>
                     <th style={{ padding: '14px', textAlign: 'center' }}>Primos</th>
-                    <th style={{ padding: '14px', textAlign: 'center' }}>Moldura</th>
                     <th style={{ padding: '14px', textAlign: 'center' }}>Soma</th>
-                    <th style={{ padding: '14px', textAlign: 'center' }}>Ímpares</th>
                   </tr>
                 </thead>
                 <tbody>
                   {jogosGerados.map((jogo) => (
                     <tr key={jogo.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold', color: '#6c0a63', fontSize: '13px' }}>
-                        {String(jogo.id).padStart(2, '0')}
-                      </td>
+                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold', color: '#6c0a63' }}>{String(jogo.id).padStart(2, '0')}</td>
                       <td style={{ padding: '14px' }}>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          {jogo.numeros.num ? null : jogo.numeros.map((num, idx) => (
-                            <span 
-                              key={idx} 
-                              style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '12px', fontWeight: '900', color: '#1f2937', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
-                            >
+                          {jogo.numeros.map((num, idx) => (
+                            <span key={idx} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '12px', fontWeight: '900', color: '#1f2937' }}>
                               {String(num).padStart(2, '0')}
                             </span>
                           ))}
                         </div>
                       </td>
-                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>{jogo.primos}</td>
-                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>{jogo.moldura}</td>
-                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>{jogo.soma}</td>
-                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold', color: '#374151' }}>{jogo.impares}</td>
+                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold' }}>{jogo.primos}</td>
+                      <td style={{ padding: '14px', textAlign: 'center', fontWeight: 'bold' }}>{jogo.soma}</td>
                     </tr>
                   ))}
                 </tbody>
