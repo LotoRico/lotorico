@@ -9,14 +9,23 @@ export default function AdminPanel() {
     const file = e.target.files[0];
     if (!file) return;
 
-    setStatus('Processando planilha, aguarde...');
+    setStatus('Processando planilha "LOTOFÁCIL"...');
     const reader = new FileReader();
 
     reader.onload = async (event) => {
       try {
         const data = new Uint8Array(event.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
-        const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+        
+        // Acessa a aba específica com acento
+        const worksheet = workbook.Sheets['LOTOFÁCIL'];
+        
+        if (!worksheet) {
+          setStatus('Erro: Aba "LOTOFÁCIL" não encontrada na planilha.');
+          return;
+        }
+
+        const json = XLSX.utils.sheet_to_json(worksheet);
 
         if (json.length === 0) {
           setStatus('A planilha está vazia.');
@@ -25,18 +34,9 @@ export default function AdminPanel() {
 
         const sorteiosFormatados = json.map((row) => {
           const findKey = (name) => {
-            const normalizedTarget = name
-              .toLowerCase()
-              .normalize('NFD')
-              .replace(/[\u0300-\u036f]/g, '')
-              .replace(/\s+/g, '');
-
+            const normalizedTarget = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '');
             return Object.keys(row).find(k => {
-              const normalizedKey = k
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/\s+/g, '');
+              const normalizedKey = k.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '');
               return normalizedKey === normalizedTarget;
             });
           };
@@ -78,11 +78,6 @@ export default function AdminPanel() {
           };
         });
 
-        if (!sorteiosFormatados[0].concurso) {
-          setStatus('Erro: O cabeçalho não bateu. Verifique se os nomes das colunas estão corretos.');
-          return;
-        }
-
         setTotalCarregados(sorteiosFormatados.length);
 
         const response = await fetch('/api/importar-sorteios', {
@@ -92,13 +87,14 @@ export default function AdminPanel() {
         });
 
         if (response.ok) {
-          setStatus(`Sucesso, Mestre! ${sorteiosFormatados.length} registros gravados.`);
+          setStatus(`Sucesso, Mestre! ${sorteiosFormatados.length} registros importados.`);
         } else {
           setStatus('Erro ao comunicar com o servidor.');
         }
 
       } catch (error) {
-        setStatus('Erro crítico na leitura do arquivo.');
+        console.error(error);
+        setStatus('Erro ao ler a planilha. Verifique se o nome da aba está correto.');
       }
     };
     reader.readAsArrayBuffer(file);
@@ -107,7 +103,7 @@ export default function AdminPanel() {
   return (
     <div style={{ padding: '20px', border: '1px solid #444', borderRadius: '8px', maxWidth: '600px', margin: '20px auto', fontFamily: 'sans-serif' }}>
       <h2>⚙️ Zona do Administrador - LotoRico</h2>
-      <input type="file" onChange={processarPlanilha} accept=".xlsx, .xls" />
+      <input type="file" onChange={processarPlanilha} accept=".xlsx" />
       <div style={{ marginTop: '10px' }}><strong>Status:</strong> {status}</div>
       {totalCarregados > 0 && <p style={{ color: '#059669' }}>Total: {totalCarregados} sorteios processados.</p>}
     </div>
