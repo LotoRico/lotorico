@@ -9,10 +9,10 @@ export default function AdminPanel() {
     const file = e.target.files[0];
     if (!file) return;
 
-    setStatus('Lendo arquivo, aguarde...');
+    setStatus('Lendo arquivo e enviando para o banco, aguarde...');
     const reader = new FileReader();
 
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const data = new Uint8Array(event.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
@@ -64,16 +64,26 @@ export default function AdminPanel() {
           observacao: row['Observação'] || ''
         }));
 
-        console.log("Sorteios prontos para envio ao banco:", sorteiosFormatados);
         setTotalCarregados(sorteiosFormatados.length);
-        setStatus(`Sucesso, Mestre! ${sorteiosFormatados.length} sorteios processados e mapeados com sucesso.`);
-        
-        // Aqui posteriormente faremos o fetch para o backend salvar no MySQL:
-        // enviarParaBackend(sorteiosFormatados);
+
+        // Dispara os dados mapeados para a rota do backend salvar no MySQL
+        const response = await fetch('/api/importar-sorteios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sorteios: sorteiosFormatados })
+        });
+
+        const resultado = await response.json();
+
+        if (response.ok) {
+          setStatus(`Sucesso, Mestre! ${sorteiosFormatados.length} sorteios processados e gravados no MySQL com sucesso.`);
+        } else {
+          setStatus('Erro ao salvar no banco: ' + (resultado.erro || 'Erro desconhecido'));
+        }
 
       } catch (error) {
         console.error(error);
-        setStatus('Erro ao ler a planilha. Verifique se as colunas batem com o layout oficial da Caixa.');
+        setStatus('Erro ao processar ou enviar a planilha. Verifique a conexão com o servidor.');
       }
     };
     reader.readAsArrayBuffer(file);
