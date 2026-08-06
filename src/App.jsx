@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AdminPanel from './AdminPanel';
 
 export default function App() {
   // Estado para controlar qual tela está ativa: 'landing', 'login', 'cadastro', 'app'
@@ -10,7 +11,11 @@ export default function App() {
   const [documentoCadastro, setDocumentoCadastro] = useState('');
   const [senhaCadastro, setSenhaCadastro] = useState('');
 
-  // Estados do Gerador Lotofácil (mantendo toda a inteligência anterior)
+  // Estados do Login
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginSenha, setLoginSenha] = useState('');
+
+  // Estados do Gerador Lotofácil
   const [qtdJogos, setQtdJogos] = useState(10);
   const [concursoAlvo, setConcursoAlvo] = useState('');
   
@@ -159,6 +164,24 @@ export default function App() {
 
   const handleExportarPDF = () => { window.print(); };
 
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    if (!loginEmail || !loginSenha) {
+      alert('Por favor, preencha o e-mail/CPF e a senha.');
+      return;
+    }
+    setTelaAtual('app');
+  };
+
+  const handleCadastroSubmit = (e) => {
+    e.preventDefault();
+    if (!nomeCadastro || !emailCadastro || !documentoCadastro || !senhaCadastro) {
+      alert('Por favor, preencha todos os campos do cadastro.');
+      return;
+    }
+    setTelaAtual('app');
+  };
+
   // ================= RENDERIZAÇÃO CONDICIONAL DE TELAS =================
 
   // 1. TELA: LANDING PAGE
@@ -211,7 +234,7 @@ export default function App() {
     );
   }
 
-  // 2. TELA: CADASTRO COMPLETO (COM DOCUMENTO / CPF)
+  // 2. TELA: CADASTRO COMPLETO
   if (telaAtual === 'cadastro') {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#f4f5f7', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
@@ -219,29 +242,31 @@ export default function App() {
           <h2 style={{ color: '#6c0a63', fontSize: '24px', fontWeight: '900', marginBottom: '6px', textAlign: 'center' }}>Criar Conta no Loto Rico</h2>
           <p style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', marginBottom: '25px' }}>Preencha seus dados para liberar acesso aos módulos</p>
 
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Nome Completo</label>
-            <input type="text" placeholder="Ex: Ivã Lima Braga" value={nomeCadastro} onChange={(e) => setNomeCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
-          </div>
+          <form onSubmit={handleCadastroSubmit}>
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Nome Completo</label>
+              <input type="text" placeholder="Ex: Ivã Lima Braga" value={nomeCadastro} onChange={(e) => setNomeCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
+            </div>
 
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>E-mail</label>
-            <input type="email" placeholder="seu@email.com" value={emailCadastro} onChange={(e) => setEmailCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
-          </div>
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>E-mail</label>
+              <input type="email" placeholder="seu@email.com" value={emailCadastro} onChange={(e) => setEmailCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
+            </div>
 
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Número de Documento (CPF)</label>
-            <input type="text" placeholder="000.000.000-00" value={documentoCadastro} onChange={(e) => setDocumentoCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
-          </div>
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Número de Documento (CPF)</label>
+              <input type="text" placeholder="000.000.000-00" value={documentoCadastro} onChange={(e) => setDocumentoCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
+            </div>
 
-          <div style={{ marginBottom: '25px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Senha de Acesso</label>
-            <input type="password" placeholder="••••••••" value={senhaCadastro} onChange={(e) => setSenhaCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
-          </div>
+            <div style={{ marginBottom: '25px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Senha de Acesso</label>
+              <input type="password" placeholder="••••••••" value={senhaCadastro} onChange={(e) => setSenhaCadastro(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
+            </div>
 
-          <button onClick={() => setTelaAtual('app')} style={{ width: '100%', background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '12px', boxShadow: '0 4px 10px rgba(108,10,99,0.3)' }}>
-            Finalizar Cadastro e Acessar
-          </button>
+            <button type="submit" style={{ width: '100%', background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '12px', boxShadow: '0 4px 10px rgba(108,10,99,0.3)' }}>
+              Finalizar Cadastro e Acessar
+            </button>
+          </form>
 
           <button onClick={() => setTelaAtual('landing')} style={{ width: '100%', backgroundColor: 'transparent', color: '#4b5563', border: '1px solid #d1d5db', padding: '10px', borderRadius: '12px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
             Voltar para Início
@@ -259,19 +284,21 @@ export default function App() {
           <h2 style={{ color: '#6c0a63', fontSize: '24px', fontWeight: '900', marginBottom: '6px', textAlign: 'center' }}>Entrar no Loto Rico</h2>
           <p style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', marginBottom: '25px' }}>Informe suas credenciais de acesso</p>
 
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>E-mail ou CPF</label>
-            <input type="text" placeholder="seu@email.com ou CPF" style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
-          </div>
+          <form onSubmit={handleLoginSubmit}>
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>E-mail ou CPF</label>
+              <input type="text" placeholder="seu@email.com ou CPF" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
+            </div>
 
-          <div style={{ marginBottom: '25px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Senha</label>
-            <input type="password" placeholder="••••••••" style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
-          </div>
+            <div style={{ marginBottom: '25px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#4b5563', marginBottom: '6px' }}>Senha</label>
+              <input type="password" placeholder="••••••••" value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} />
+            </div>
 
-          <button onClick={() => setTelaAtual('app')} style={{ width: '100%', background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '12px', boxShadow: '0 4px 10px rgba(108,10,99,0.3)' }}>
-            Entrar no Sistema
-          </button>
+            <button type="submit" style={{ width: '100%', background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', border: 'none', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '12px', boxShadow: '0 4px 10px rgba(108,10,99,0.3)' }}>
+              Entrar no Sistema
+            </button>
+          </form>
 
           <button onClick={() => setTelaAtual('landing')} style={{ width: '100%', backgroundColor: 'transparent', color: '#4b5563', border: '1px solid #d1d5db', padding: '10px', borderRadius: '12px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
             Voltar para Início
@@ -281,11 +308,11 @@ export default function App() {
     );
   }
 
-  // 4. TELA: O GERADOR DE JOGOS (APÓS LOGIN/CADASTRO)
+  // 4. TELA: O GERADOR DE JOGOS & PAINEL DO ADMINISTRADOR
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f4f5f7', color: '#1f2937', fontFamily: 'Arial, sans-serif', paddingBottom: '40px' }}>
       
-      {/* Header Roxo Caixa com Botão de Sair */}
+      {/* Header Roxo com Botão de Sair */}
       <header style={{ background: 'linear-gradient(135deg, #5a189a, #6c0a63)', color: '#ffffff', padding: '20px 30px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 'bold', letterSpacing: '1px' }}>LOTO RICO</h1>
@@ -303,8 +330,11 @@ export default function App() {
 
       <main style={{ maxWidth: '1200px', margin: '30px auto', padding: '0 20px' }}>
         
-        {/* Bloco de Configurações */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '25px' }}>
+        {/* ZONA DO ADMINISTRADOR (INTEGRADA) */}
+        <AdminPanel />
+
+        {/* Bloco de Configurações e Filtros */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '25px', marginTop: '25px' }}>
           
           {/* Parâmetros */}
           <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb' }}>
@@ -514,7 +544,7 @@ export default function App() {
                       </td>
                       <td style={{ padding: '14px' }}>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          {jogo.numeros.map((num, idx) => (
+                          {jogo.numeros.num ? null : jogo.numeros.map((num, idx) => (
                             <span 
                               key={idx} 
                               style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '12px', fontWeight: '900', color: '#1f2937', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
