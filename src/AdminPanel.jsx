@@ -2,21 +2,22 @@ import { useState } from 'react';
 import * as XLSX from 'xlsx';
 
 export default function AdminPanel() {
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('Pronto para iniciar.');
+  const [dadosProntos, setDadosProntos] = useState([]);
   const [totalCarregados, setTotalCarregados] = useState(0);
 
+  // 1º Botão: Baixar / Ler os dados da planilha
   const processarPlanilha = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    setStatus('Processando planilha "LOTOFÁCIL"...');
+    setStatus('Lendo e processando os concursos...');
     const reader = new FileReader();
 
-    reader.onload = async (event) => {
+    reader.onload = (event) => {
       try {
         const data = new Uint8Array(event.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
-        
         const worksheet = workbook.Sheets['LOTOFÁCIL'];
         
         if (!worksheet) {
@@ -90,38 +91,71 @@ export default function AdminPanel() {
           ];
         });
 
+        setDadosProntos(sorteiosFormatados);
         setTotalCarregados(sorteiosFormatados.length);
-        setStatus(`Lendo ${sorteiosFormatados.length} registros. Enviando para o servidor...`);
-
-        // Envia os dados processados para a API do back-end
-        const response = await fetch('/api/importar-sorteios', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sorteios: sorteiosFormatados })
-        });
-
-        const resultado = await response.json();
-
-        if (!response.ok) {
-          throw new Error(resultado.error || 'Erro ao salvar no servidor');
-        }
-
-        setStatus(`Sucesso absoluto, Mestre! ${sorteiosFormatados.length} sorteios importados com sucesso.`);
+        setStatus(`Sucesso! ${sorteiosFormatados.length} concursos carregados. Pronto para salvar.`);
 
       } catch (error) {
-        console.log(error);
-        setStatus(`Erro crítico: ${error.message}`);
+        console.error(error);
+        setStatus(`Erro ao ler planilha: ${error.message}`);
       }
     };
     reader.readAsArrayBuffer(file);
   };
 
+  // 2º Botão: Salvar Concursos no banco de dados
+  const salvarNoBanco = async () => {
+    if (dadosProntos.length === 0) {
+      setStatus('Nenhum concurso carregado para salvar.');
+      return;
+    }
+
+    setStatus('Gravando concursos no banco de dados...');
+
+    try {
+      const response = await fetch('http://localhost:3001/api/importar-sorteios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sorteios: dadosProntos })
+      });
+
+      const resultado = await response.json();
+
+      if (!response.ok) {
+        throw new Error(resultado.erro || 'Erro ao comunicar com o servidor.');
+      }
+
+      setStatus(`Sucesso absoluto, Mestre! ${resultado.total} concursos gravados no MySQL.`);
+
+    } catch (error) {
+      console.error(error);
+      setStatus(`Erro ao salvar no banco: ${error.message}. Verifique se a API local está ativa.`);
+    }
+  };
+
   return (
-    <div style={{ padding: '20px', border: '1px solid #444', borderRadius: '8px', maxWidth: '600px', margin: '20px auto', fontFamily: 'sans-serif', backgroundColor: '#1e1e1e', color: '#fff' }}>
-      <h2>⚙️ Zona do Administrador - LotoRico</h2>
-      <input type="file" onChange={processarPlanilha} accept=".xlsx" style={{ marginTop: '10px' }} />
-      <div style={{ marginTop: '15px' }}><strong>Status:</strong> {status}</div>
-      {totalCarregados > 0 && <p style={{ color: '#10b981', marginTop: '10px' }}>Total processado no arquivo: {totalCarregados} sorteios.</p>}
+    <div style={{ padding: '30px', border: '1px solid #444', borderRadius: '8px', maxWidth: '650px', margin: '30px auto', fontFamily: 'sans-serif', backgroundColor: '#1e1e1e', color: '#fff' }}>
+      <h2>⚙️ Painel do Administrador - LotoRico</h2>
+      
+      <div style={{ marginTop: '20px' }}>
+        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>1. Selecionar Planilha (Baixar Concursos):</label>
+        <input type="file" onChange={processarPlanilha} accept=".xlsx" style={{ padding: '8px', backgroundColor: '#2a2a2a', color: '#fff', border: '1px solid #555', borderRadius: '4px', width: '100%' }} />
+      </div>
+
+      {totalCarregados > 0 && (
+        <div style={{ marginTop: '20px' }}>
+          <button 
+            onClick={salvarNoBanco}
+            style={{ padding: '12px 20px', backgroundColor: '#059669', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', width: '100%' }}
+          >
+            💾 Salvar Concursos no Banco de Dados ({totalCarregados} prontos)
+          </button>
+        </div>
+      )}
+
+      <div style={{ marginTop: '20px', padding: '12px', backgroundColor: '#2a2a2a', borderRadius: '6px', border: '1px solid #444' }}>
+        <strong>Status do Sistema:</strong> <span style={{ color: '#38bdf8' }}>{status}</span>
+      </div>
     </div>
   );
 }
