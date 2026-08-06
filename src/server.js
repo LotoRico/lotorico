@@ -1,0 +1,43 @@
+const express = require('express');
+const cors = require('cors');
+const db = require('./db'); // Como estão na mesma pasta src, o caminho é direto './db'
+
+const app = express();
+app.use(express.json({ limit: '50mb' }));
+app.use(cors());
+
+app.post('/api/importar-sorteios', (req, res) => {
+    const sorteiosFormatados = req.body.sorteios;
+
+    if (!sorteiosFormatados || sorteiosFormatados.length === 0) {
+        return res.status(400).json({ erro: 'Nenhum dado enviado.' });
+    }
+
+    const query = `
+      INSERT INTO sorteios (
+        concurso, data_sorteio, 
+        bola01, bola02, bola03, bola04, bola05, bola06, bola07, bola08, bola09, 
+        bola10, bola11, bola12, bola13, bola14, bola15, 
+        ganhadores_15_acertos, cidade_uf, rateio_15_acertos, 
+        ganhadores_14_acertos, rateio_14_acertos, ganhadores_13_acertos, rateio_13_acertos, 
+        ganhadores_12_acertos, rateio_12_acertos, ganhadores_11_acertos, rateio_11_acertos, 
+        acumulado_15_acertos, arrecadacao_total, estimativa_premio, 
+        acumulado_especial_independencia, observacao
+      ) VALUES ? 
+      ON DUPLICATE KEY UPDATE 
+        data_sorteio = VALUES(data_sorteio),
+        rateio_15_acertos = VALUES(rateio_15_acertos);
+    `;
+
+    db.query(query, [sorteiosFormatados], (err, results) => {
+        if (err) {
+            console.error('Erro ao gravar no MySQL:', err);
+            return res.status(500).json({ erro: err.message });
+        }
+        res.json({ sucesso: true, total: sorteiosFormatados.length });
+    });
+});
+
+app.listen(3001, () => {
+    console.log('Servidor backend rodando na porta 3001, Mestre!');
+});
