@@ -27,42 +27,52 @@ export default function AdminPanel() {
           return;
         }
 
-        // Mapeia cada linha da planilha para o formato exato das colunas do nosso MySQL
-        const sorteiosFormatados = json.map((row) => ({
-          concurso: row['Concurso'] || row['concurso'],
-          data_sorteio: row['Data Sorteio'] || row['data_sorteio'],
-          bola_1: row['Bola1'],
-          bola_2: row['Bola2'],
-          bola_3: row['Bola3'],
-          bola_4: row['Bola4'],
-          bola_5: row['Bola5'],
-          bola_6: row['Bola6'],
-          bola_7: row['Bola7'],
-          bola_8: row['Bola8'],
-          bola_9: row['Bola9'],
-          bola_10: row['Bola10'],
-          bola_11: row['Bola11'],
-          bola_12: row['Bola12'],
-          bola_13: row['Bola13'],
-          bola_14: row['Bola14'],
-          bola_15: row['Bola15'],
-          ganhadores_15_acertos: row['Ganhadores 15 acertos'] || 0,
-          cidade_uf: row['Cidade / UF'] || '',
-          rateio_15_acertos: row['Rateio 15 acertos'] || 0,
-          ganhadores_14_acertos: row['Ganhadores 14 acertos'] || 0,
-          rateio_14_acertos: row['Rateio 14 acertos'] || 0,
-          ganhadores_13_acertos: row['Ganhadores 13 acertos'] || 0,
-          rateio_13_acertos: row['Rateio 13 acertos'] || 0,
-          ganhadores_12_acertos: row['Ganhadores 12 acertos'] || 0,
-          rateio_12_acertos: row['Rateio 12 acertos'] || 0,
-          ganhadores_11_acertos: row['Ganhadores 11 acertos'] || 0,
-          rateio_11_acertos: row['Rateio 11 acertos'] || 0,
-          acumulado_15_acertos: row['Acumulado 15 acertos'] || 0,
-          arrecadacao_total: row['Arrecadacao Total'] || 0,
-          estimativa_premio: row['Estimativa Prêmio'] || 0,
-          acumulado_especial_independencia: row['Acumulado sorteio especial Lotofácil da Independência'] || 0,
-          observacao: row['Observação'] || ''
-        }));
+        // Mapeia cada linha buscando flexibilidade nos nomes das colunas da Caixa
+        const sorteiosFormatados = json.map((row) => {
+          const getVal = (possiveisNomes) => {
+            const chaveEncontrada = Object.keys(row).find(k => {
+              const normalizadaK = k.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+              return possiveisNomes.some(p => normalizadaK.includes(p.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()));
+            });
+            return chaveEncontrada ? row[chaveEncontrada] : null;
+          };
+
+          return {
+            concurso: getVal(['concurso']),
+            data_sorteio: getVal(['data sorteio', 'data']),
+            bola_1: getVal(['bola 1', 'bola1']),
+            bola_2: getVal(['bola 2', 'bola2']),
+            bola_3: getVal(['bola 3', 'bola3']),
+            bola_4: getVal(['bola 4', 'bola4']),
+            bola_5: getVal(['bola 5', 'bola5']),
+            bola_6: getVal(['bola 6', 'bola6']),
+            bola_7: getVal(['bola 7', 'bola7']),
+            bola_8: getVal(['bola 8', 'bola8']),
+            bola_9: getVal(['bola 9', 'bola9']),
+            bola_10: getVal(['bola 10', 'bola10']),
+            bola_11: getVal(['bola 11', 'bola11']),
+            bola_12: getVal(['bola 12', 'bola12']),
+            bola_13: getVal(['bola 13', 'bola13']),
+            bola_14: getVal(['bola 14', 'bola14']),
+            bola_15: getVal(['bola 15', 'bola15']),
+            ganhadores_15_acertos: getVal(['ganhadores 15']) || 0,
+            cidade_uf: getVal(['cidade', 'uf']) || '',
+            rateio_15_acertos: getVal(['rateio 15']) || 0,
+            ganhadores_14_acertos: getVal(['ganhadores 14']) || 0,
+            rateio_14_acertos: getVal(['rateio 14']) || 0,
+            ganhadores_13_acertos: getVal(['ganhadores 13']) || 0,
+            rateio_13_acertos: getVal(['rateio 13']) || 0,
+            ganhadores_12_acertos: getVal(['ganhadores 12']) || 0,
+            rateio_12_acertos: getVal(['rateio 12']) || 0,
+            ganhadores_11_acertos: getVal(['ganhadores 11']) || 0,
+            rateio_11_acertos: getVal(['rateio 11']) || 0,
+            acumulado_15_acertos: getVal(['acumulado 15']) || 0,
+            arrecadacao_total: getVal(['arrecadacao']) || 0,
+            estimativa_premio: getVal(['estimativa']) || 0,
+            acumulado_especial_independencia: getVal(['independencia']) || 0,
+            observacao: getVal(['observacao']) || ''
+          };
+        });
 
         setTotalCarregados(sorteiosFormatados.length);
 
