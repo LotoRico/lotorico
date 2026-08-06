@@ -17,7 +17,6 @@ export default function AdminPanel() {
         const data = new Uint8Array(event.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
         
-        // Acessa a aba específica com acento
         const worksheet = workbook.Sheets['LOTOFÁCIL'];
         
         if (!worksheet) {
@@ -79,22 +78,35 @@ export default function AdminPanel() {
         });
 
         setTotalCarregados(sorteiosFormatados.length);
+        setStatus(`Lendo ${sorteiosFormatados.length} registros. Enviando para o banco em lotes...`);
 
-        const response = await fetch('/api/importar-sorteios', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sorteios: sorteiosFormatados })
-        });
+        // Envio em lotes (chunks de 500) para evitar estouro de payload no servidor
+        const tamanhoLote = 500;
+        let sucessos = 0;
 
-        if (response.ok) {
-          setStatus(`Sucesso, Mestre! ${sorteiosFormatados.length} registros importados.`);
-        } else {
-          setStatus('Erro ao comunicar com o servidor.');
+        for (let i = 0; i < sorteiosFormatados.length; i += tamanhoLote) {
+          const lote = sorteiosFormatados.slice(i, i + tamanhoLote);
+          
+          const response = await fetch('/api/importar-sorteios', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sorteios: lote })
+          });
+
+          if (!response.ok) {
+            const erroTexto = await response.text();
+            throw new Error(`Erro no lote ${i / tamanhoLote + 1}: ${erroTexto}`);
+          }
+
+          sucessos += lote.length;
+          setStatus(`Enviando... ${sucessos} de ${sorteiosFormatados.length} gravados.`);
         }
+
+        setStatus(`Sucesso absoluto, Mestre! Todos os ${sorteiosFormatados.length} registros foram gravados no banco.`);
 
       } catch (error) {
         console.error(error);
-        setStatus('Erro ao ler a planilha. Verifique se o nome da aba está correto.');
+        setStatus(`Erro na gravação: ${error.message}`);
       }
     };
     reader.readAsArrayBuffer(file);
@@ -105,7 +117,7 @@ export default function AdminPanel() {
       <h2>⚙️ Zona do Administrador - LotoRico</h2>
       <input type="file" onChange={processarPlanilha} accept=".xlsx" />
       <div style={{ marginTop: '10px' }}><strong>Status:</strong> {status}</div>
-      {totalCarregados > 0 && <p style={{ color: '#059669' }}>Total: {totalCarregados} sorteios processados.</p>}
+      {totalCarregados > 0 && <p style={{ color: '#059669' }}>Total processado no arquivo: {totalCarregados} sorteios.</p>}
     </div>
   );
 }
