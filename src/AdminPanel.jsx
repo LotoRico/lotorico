@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
-import db from './db';
 
 export default function AdminPanel() {
   const [status, setStatus] = useState('');
@@ -32,7 +31,6 @@ export default function AdminPanel() {
           return;
         }
 
-        // Formata dezenas de 1 a 9 com zero à esquerda (string)
         const formatarBolaStr = (valor) => {
           if (!valor && valor !== 0) return '01';
           const num = parseInt(valor, 10);
@@ -40,7 +38,6 @@ export default function AdminPanel() {
           return num <= 9 ? `0${num}` : `${num}`;
         };
 
-        // Formata dezenas de 10 a 15 (inteiro)
         const formatarBolaInt = (valor) => {
           if (!valor && valor !== 0) return 10;
           const num = parseInt(valor, 10);
@@ -59,7 +56,6 @@ export default function AdminPanel() {
           return [
             row[findKey('Concurso')] || 0,
             row[findKey('Data Sorteio')] || null,
-            // bola01 a bola09 (VARCHAR)
             formatarBolaStr(row[findKey('Bola1')]),
             formatarBolaStr(row[findKey('Bola2')]),
             formatarBolaStr(row[findKey('Bola3')]),
@@ -69,14 +65,12 @@ export default function AdminPanel() {
             formatarBolaStr(row[findKey('Bola7')]),
             formatarBolaStr(row[findKey('Bola8')]),
             formatarBolaStr(row[findKey('Bola9')]),
-            // bola10 a bola15 (INT)
             formatarBolaInt(row[findKey('Bola10')]),
             formatarBolaInt(row[findKey('Bola11')]),
             formatarBolaInt(row[findKey('Bola12')]),
             formatarBolaInt(row[findKey('Bola13')]),
             formatarBolaInt(row[findKey('Bola14')]),
             formatarBolaInt(row[findKey('Bola15')]),
-            // Demais campos da tabela
             row[findKey('Ganhadores 15 acertos')] || 0,
             row[findKey('Cidade / UF')] || '',
             row[findKey('Rateio 15 acertos')] || 0,
@@ -97,36 +91,25 @@ export default function AdminPanel() {
         });
 
         setTotalCarregados(sorteiosFormatados.length);
-        setStatus(`Lendo ${sorteiosFormatados.length} registros. Gravando no MySQL...`);
+        setStatus(`Lendo ${sorteiosFormatados.length} registros. Enviando para o servidor...`);
 
-        const query = `
-          INSERT INTO sorteios (
-            concurso, data_sorteio, 
-            bola01, bola02, bola03, bola04, bola05, bola06, bola07, bola08, bola09, 
-            bola10, bola11, bola12, bola13, bola14, bola15, 
-            ganhadores_15_acertos, cidade_uf, rateio_15_acertos, 
-            ganhadores_14_acertos, rateio_14_acertos, ganhadores_13_acertos, rateio_13_acertos, 
-            ganhadores_12_acertos, rateio_12_acertos, ganhadores_11_acertos, rateio_11_acertos, 
-            acumulado_15_acertos, arrecadacao_total, estimativa_premio, 
-            acumulado_especial_independencia, observacao
-          ) VALUES ? 
-          ON DUPLICATE KEY UPDATE 
-            data_sorteio = VALUES(data_sorteio),
-            rateio_15_acertos = VALUES(rateio_15_acertos);
-        `;
-
-        db.query(query, [sorteiosFormatados], (err, results) => {
-          if (err) {
-            console.error('Erro ao gravar no MySQL:', err);
-            setStatus(`Erro no banco: ${err.message}`);
-            return;
-          }
-
-          setStatus(`Sucesso absoluto, Mestre! ${sorteiosFormatados.length} sorteios importados com sucesso.`);
+        // Envia os dados processados para a API do back-end
+        const response = await fetch('/api/importar-sorteios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sorteios: sorteiosFormatados })
         });
 
+        const resultado = await response.json();
+
+        if (!response.ok) {
+          throw new Error(resultado.error || 'Erro ao salvar no servidor');
+        }
+
+        setStatus(`Sucesso absoluto, Mestre! ${sorteiosFormatados.length} sorteios importados com sucesso.`);
+
       } catch (error) {
-        console.error(error);
+        console.log(error);
         setStatus(`Erro crítico: ${error.message}`);
       }
     };
@@ -134,11 +117,11 @@ export default function AdminPanel() {
   };
 
   return (
-    <div style={{ padding: '20px', border: '1px solid #444', borderRadius: '8px', maxWidth: '600px', margin: '20px auto', fontFamily: 'sans-serif' }}>
+    <div style={{ padding: '20px', border: '1px solid #444', borderRadius: '8px', maxWidth: '600px', margin: '20px auto', fontFamily: 'sans-serif', backgroundColor: '#1e1e1e', color: '#fff' }}>
       <h2>⚙️ Zona do Administrador - LotoRico</h2>
-      <input type="file" onChange={processarPlanilha} accept=".xlsx" />
-      <div style={{ marginTop: '10px' }}><strong>Status:</strong> {status}</div>
-      {totalCarregados > 0 && <p style={{ color: '#059669' }}>Total processado no arquivo: {totalCarregados} sorteios.</p>}
+      <input type="file" onChange={processarPlanilha} accept=".xlsx" style={{ marginTop: '10px' }} />
+      <div style={{ marginTop: '15px' }}><strong>Status:</strong> {status}</div>
+      {totalCarregados > 0 && <p style={{ color: '#10b981', marginTop: '10px' }}>Total processado no arquivo: {totalCarregados} sorteios.</p>}
     </div>
   );
 }
