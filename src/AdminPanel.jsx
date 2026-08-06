@@ -24,11 +24,21 @@ export default function AdminPanel() {
         }
 
         const sorteiosFormatados = json.map((row) => {
-          // Função que busca a chave exata ignorando case/espaços extras
           const findKey = (name) => {
-            return Object.keys(row).find(k => 
-              k.trim().toLowerCase() === name.trim().toLowerCase()
-            );
+            const normalizedTarget = name
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/\s+/g, '');
+
+            return Object.keys(row).find(k => {
+              const normalizedKey = k
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, '');
+              return normalizedKey === normalizedTarget;
+            });
           };
 
           return {
@@ -68,9 +78,8 @@ export default function AdminPanel() {
           };
         });
 
-        // Validação: se o primeiro registro não tem concurso, o layout está errado
         if (!sorteiosFormatados[0].concurso) {
-          setStatus('Erro: O cabeçalho não bateu. Verifique se os nomes das colunas estão exatamente como me passou.');
+          setStatus('Erro: O cabeçalho não bateu. Verifique se os nomes das colunas estão corretos.');
           return;
         }
 
