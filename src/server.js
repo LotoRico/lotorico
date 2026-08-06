@@ -1,16 +1,14 @@
 const express = require('express');
-const cors = require('cors');
-const db = require('./db'); // Como estão na mesma pasta src, o caminho é direto './db'
-
+const db = require('./db'); // Conexão com o MySQL
 const app = express();
-app.use(express.json({ limit: '50mb' }));
-app.use(cors());
+
+app.use(express.json({ limit: '50mb' })); // Necessário para aceitar volumes grandes de sorteios
 
 app.post('/api/importar-sorteios', (req, res) => {
-    const sorteiosFormatados = req.body.sorteios;
+    const { sorteios } = req.body;
 
-    if (!sorteiosFormatados || sorteiosFormatados.length === 0) {
-        return res.status(400).json({ erro: 'Nenhum dado enviado.' });
+    if (!sorteios || sorteios.length === 0) {
+        return res.status(400).json({ error: 'Nenhum sorteio enviado.' });
     }
 
     const query = `
@@ -29,15 +27,11 @@ app.post('/api/importar-sorteios', (req, res) => {
         rateio_15_acertos = VALUES(rateio_15_acertos);
     `;
 
-    db.query(query, [sorteiosFormatados], (err, results) => {
+    db.query(query, [sorteios], (err, results) => {
         if (err) {
             console.error('Erro ao gravar no MySQL:', err);
-            return res.status(500).json({ erro: err.message });
+            return res.status(500).json({ error: err.message });
         }
-        res.json({ sucesso: true, total: sorteiosFormatados.length });
+        res.json({ success: true, affectedRows: results.affectedRows });
     });
-});
-
-app.listen(3001, () => {
-    console.log('Servidor backend rodando na porta 3001, Mestre!');
 });
