@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
+import db from './db'; // Importando a conexão que você configurou
 
 export default function AdminPanel() {
   const [status, setStatus] = useState('');
@@ -40,73 +41,75 @@ export default function AdminPanel() {
             });
           };
 
-          return {
-            concurso: row[findKey('Concurso')],
-            data_sorteio: row[findKey('Data Sorteio')],
-            bola_1: row[findKey('Bola1')],
-            bola_2: row[findKey('Bola2')],
-            bola_3: row[findKey('Bola3')],
-            bola_4: row[findKey('Bola4')],
-            bola_5: row[findKey('Bola5')],
-            bola_6: row[findKey('Bola6')],
-            bola_7: row[findKey('Bola7')],
-            bola_8: row[findKey('Bola8')],
-            bola_9: row[findKey('Bola9')],
-            bola_10: row[findKey('Bola10')],
-            bola_11: row[findKey('Bola11')],
-            bola_12: row[findKey('Bola12')],
-            bola_13: row[findKey('Bola13')],
-            bola_14: row[findKey('Bola14')],
-            bola_15: row[findKey('Bola15')],
-            ganhadores_15_acertos: row[findKey('Ganhadores 15 acertos')] || 0,
-            cidade_uf: row[findKey('Cidade / UF')] || '',
-            rateio_15_acertos: row[findKey('Rateio 15 acertos')] || 0,
-            ganhadores_14_acertos: row[findKey('Ganhadores 14 acertos')] || 0,
-            rateio_14_acertos: row[findKey('Rateio 14 acertos')] || 0,
-            ganhadores_13_acertos: row[findKey('Ganhadores 13 acertos')] || 0,
-            rateio_13_acertos: row[findKey('Rateio 13 acertos')] || 0,
-            ganhadores_12_acertos: row[findKey('Ganhadores 12 acertos')] || 0,
-            rateio_12_acertos: row[findKey('Rateio 12 acertos')] || 0,
-            ganhadores_11_acertos: row[findKey('Ganhadores 11 acertos')] || 0,
-            rateio_11_acertos: row[findKey('Rateio 11 acertos')] || 0,
-            acumulado_15_acertos: row[findKey('Acumulado 15 acertos')] || 0,
-            arrecadacao_total: row[findKey('Arrecadacao Total')] || 0,
-            estimativa_premio: row[findKey('Estimativa Prêmio')] || 0,
-            acumulado_especial_independencia: row[findKey('Acumulado sorteio especial Lotofácil da Independência')] || 0,
-            observacao: row[findKey('Observação')] || ''
-          };
+          return [
+            row[findKey('Concurso')] || 0,
+            row[findKey('Data Sorteio')] || '',
+            row[findKey('Bola1')] || 0,
+            row[findKey('Bola2')] || 0,
+            row[findKey('Bola3')] || 0,
+            row[findKey('Bola4')] || 0,
+            row[findKey('Bola5')] || 0,
+            row[findKey('Bola6')] || 0,
+            row[findKey('Bola7')] || 0,
+            row[findKey('Bola8')] || 0,
+            row[findKey('Bola9')] || 0,
+            row[findKey('Bola10')] || 0,
+            row[findKey('Bola11')] || 0,
+            row[findKey('Bola12')] || 0,
+            row[findKey('Bola13')] || 0,
+            row[findKey('Bola14')] || 0,
+            row[findKey('Bola15')] || 0,
+            row[findKey('Ganhadores 15 acertos')] || 0,
+            row[findKey('Cidade / UF')] || '',
+            row[findKey('Rateio 15 acertos')] || 0,
+            row[findKey('Ganhadores 14 acertos')] || 0,
+            row[findKey('Rateio 14 acertos')] || 0,
+            row[findKey('Ganhadores 13 acertos')] || 0,
+            row[findKey('Rateio 13 acertos')] || 0,
+            row[findKey('Ganhadores 12 acertos')] || 0,
+            row[findKey('Rateio 12 acertos')] || 0,
+            row[findKey('Ganhadores 11 acertos')] || 0,
+            row[findKey('Rateio 11 acertos')] || 0,
+            row[findKey('Acumulado 15 acertos')] || 0,
+            row[findKey('Arrecadacao Total')] || 0,
+            row[findKey('Estimativa Prêmio')] || 0,
+            row[findKey('Acumulado sorteio especial Lotofácil da Independência')] || 0,
+            row[findKey('Observação')] || ''
+          ];
         });
 
         setTotalCarregados(sorteiosFormatados.length);
-        setStatus(`Lendo ${sorteiosFormatados.length} registros. Enviando para o banco em lotes...`);
+        setStatus(`Lendo ${sorteiosFormatados.length} registros. Gravando no MySQL...`);
 
-        // Envio em lotes (chunks de 500) para evitar estouro de payload no servidor
-        const tamanhoLote = 500;
-        let sucessos = 0;
+        // Query de inserção em massa (Bulk Insert) com ON DUPLICATE KEY UPDATE para atualizar se já existir
+        const query = `
+          INSERT INTO sorteios (
+            concurso, data_sorteio, bola_1, bola_2, bola_3, bola_4, bola_5, bola_6, bola_7, bola_8, 
+            bola_9, bola_10, bola_11, bola_12, bola_13, bola_14, bola_15, ganhadores_15_acertos, 
+            cidade_uf, rateio_15_acertos, ganhadores_14_acertos, rateio_14_acertos, ganhadores_13_acertos, 
+            rateio_13_acertos, ganhadores_12_acertos, rateio_12_acertos, ganhadores_11_acertos, 
+            rateio_11_acertos, acumulado_15_acertos, arrecadacao_total, estimativa_premio, 
+            acumulado_especial_independencia, observacao
+          ) VALUES ? 
+          ON DUPLICATE KEY UPDATE 
+            data_sorteio = VALUES(data_sorteio),
+            rateio_15_acertos = VALUES(rateio_15_acertos);
+        `;
 
-        for (let i = 0; i < sorteiosFormatados.length; i += tamanhoLote) {
-          const lote = sorteiosFormatados.slice(i, i + tamanhoLote);
-          
-          const response = await fetch('/api/importar-sorteios', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sorteios: lote })
-          });
-
-          if (!response.ok) {
-            const erroTexto = await response.text();
-            throw new Error(`Erro no lote ${i / tamanhoLote + 1}: ${erroTexto}`);
+        // Executando diretamente via conexão MySQL importada
+        db.query(query, [sorteiosFormatados], (err, results) => {
+          if (err) {
+            console.error('Erro ao gravar no MySQL:', err);
+            setStatus(`Erro no banco: ${err.message}`);
+            return;
           }
 
-          sucessos += lote.length;
-          setStatus(`Enviando... ${sucessos} de ${sorteiosFormatados.length} gravados.`);
-        }
-
-        setStatus(`Sucesso absoluto, Mestre! Todos os ${sorteiosFormatados.length} registros foram gravados no banco.`);
+          setStatus(`Sucesso absoluto, Mestre! ${sorteiosFormatados.length} sorteios gravados no banco loto_sistema.`);
+        });
 
       } catch (error) {
         console.error(error);
-        setStatus(`Erro na gravação: ${error.message}`);
+        setStatus(`Erro crítico: ${error.message}`);
       }
     };
     reader.readAsArrayBuffer(file);
