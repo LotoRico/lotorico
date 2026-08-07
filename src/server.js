@@ -1,4 +1,3 @@
-// Rota para importar e salvar os sorteios no MySQL
 app.post('/api/importar-sorteios', async (req, res) => {
   const { sorteios } = req.body;
 
@@ -6,8 +5,10 @@ app.post('/api/importar-sorteios', async (req, res) => {
     return res.status(400).json({ erro: 'Nenhum dado de sorteio fornecido.' });
   }
 
+  let conexao;
   try {
-    const conexao = await pool.getConnection();
+    conexao = await pool.getConnection();
+    let totalInserido = 0;
 
     const query = `
       INSERT INTO sorteios (
@@ -18,7 +19,7 @@ app.post('/api/importar-sorteios', async (req, res) => {
         rateio_13_acertos, ganhadores_12_acertos, rateio_12_acertos, 
         ganhadores_11_acertos, rateio_11_acertos, acumulado_15_acertos, 
         arrecadacao_total, estimativa_premio, acumulado_sorteio_especial_independencia, observacao
-      ) VALUES ?
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE 
         data_sorteio = VALUES(data_sorteio),
         bola01 = VALUES(bola01), bola02 = VALUES(bola02), bola03 = VALUES(bola03), bola04 = VALUES(bola04), bola05 = VALUES(bola05),
@@ -34,12 +35,17 @@ app.post('/api/importar-sorteios', async (req, res) => {
         observacao = VALUES(observacao);
     `;
 
-    await conexao.query(query, [sorteios]);
-    conexao.release();
+    // Insere iterando com segurança total para evitar estouro de pacote no SQL
+    for (const linha of sorteios) {
+      await conexao.query(query, linha);
+      totalInserido++;
+    }
 
-    res.json({ sucesso: true, total: sorteios.length });
+    conexao.release();
+    return res.json({ sucesso: true, total: totalInserido });
   } catch (err) {
-    console.error('Erro ao importar sorteios no banco:', err);
-    res.status(500).json({ erro: err.message });
+    if (conexao) conexao.release();
+    console.error('Erro detalhado no servidor ao importar sorteios:', err);
+    return res.status(500).json({ erro: err.message });
   }
 });
