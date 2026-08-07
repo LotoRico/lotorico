@@ -1,37 +1,46 @@
-const express = require('express');
-const db = require('./db'); // Conexão com o MySQL
-const app = express();
+// Adicione esta rota no seu server.js
+app.post('/api/importar-sorteios', async (req, res) => {
+  const { sorteios } = req.body;
 
-app.use(express.json({ limit: '50mb' })); // Necessário para aceitar volumes grandes de sorteios
+  if (!sorteios || !Array.isArray(sorteios) || sorteios.length === 0) {
+    return res.status(400).json({ erro: 'Nenhum dado de sorteio fornecido.' });
+  }
 
-app.post('/api/importar-sorteios', (req, res) => {
-    const { sorteios } = req.body;
+  try {
+    const conexao = await pool.getConnection(); // Considerando seu pool do mysql2/promise
 
-    if (!sorteios || sorteios.length === 0) {
-        return res.status(400).json({ error: 'Nenhum sorteio enviado.' });
-    }
-
+    // Query de inserção em lote (substitui se o concurso já existir para evitar duplicidade)
     const query = `
       INSERT INTO sorteios (
-        concurso, data_sorteio, 
-        bola01, bola02, bola03, bola04, bola05, bola06, bola07, bola08, bola09, 
-        bola10, bola11, bola12, bola13, bola14, bola15, 
-        ganhadores_15_acertos, cidade_uf, rateio_15_acertos, 
-        ganhadores_14_acertos, rateio_14_acertos, ganhadores_13_acertos, rateio_13_acertos, 
-        ganhadores_12_acertos, rateio_12_acertos, ganhadores_11_acertos, rateio_11_acertos, 
-        acumulado_15_acertos, arrecadacao_total, estimativa_premio, 
-        acumulado_especial_independencia, observacao
-      ) VALUES ? 
+        concurso, data_sorteio, bola01, bola02, bola03, bola04, bola05, 
+        bola06, bola07, bola08, bola09, bola10, bola11, bola12, bola13, 
+        bola14, bola15, ganhadores_15_acertos, cidade_uf, rateio_15_acertos, 
+        ganhadores_14_acertos, rateio_14_acertos, ganhadores_13_acertos, 
+        rateio_13_acertos, ganhadores_12_acertos, rateio_12_acertos, 
+        ganhadores_11_acertos, rateio_11_acertos, acumulado_15_acertos, 
+        arrecadacao_total, estimativa_premio, acumulado_sorteio_especial_independencia, observacao
+      ) VALUES ?
       ON DUPLICATE KEY UPDATE 
         data_sorteio = VALUES(data_sorteio),
-        rateio_15_acertos = VALUES(rateio_15_acertos);
+        bola01 = VALUES(bola01), bola02 = VALUES(bola02), bola03 = VALUES(bola03), bola04 = VALUES(bola04), bola05 = VALUES(bola05),
+        bola06 = VALUES(bola06), bola07 = VALUES(bola07), bola08 = VALUES(bola08), bola09 = VALUES(bola09), bola10 = VALUES(bola10),
+        bola11 = VALUES(bola11), bola12 = VALUES(bola12), bola13 = VALUES(bola13), bola14 = VALUES(bola14), bola15 = VALUES(bola15),
+        ganhadores_15_acertos = VALUES(ganhadores_15_acertos), cidade_uf = VALUES(cidade_uf), rateio_15_acertos = VALUES(rateio_15_acertos),
+        ganhadores_14_acertos = VALUES(ganhadores_14_acertos), rateio_14_acertos = VALUES(rateio_14_acertos),
+        ganhadores_13_acertos = VALUES(ganhadores_13_acertos), rateio_13_acertos = VALUES(rateio_13_acertos),
+        ganhadores_12_acertos = VALUES(ganhadores_12_acertos), rateio_12_acertos = VALUES(rateio_12_acertos),
+        ganhadores_11_acertos = VALUES(ganhadores_11_acertos), rateio_11_acertos = VALUES(rateio_11_acertos),
+        acumulado_15_acertos = VALUES(acumulado_15_acertos), arrecadacao_total = VALUES(arrecadacao_total),
+        estimativa_premio = VALUES(estimativa_premio), acumulado_sorteio_especial_independencia = VALUES(acumulado_sorteio_especial_independencia),
+        observacao = VALUES(observacao);
     `;
 
-    db.query(query, [sorteios], (err, results) => {
-        if (err) {
-            console.error('Erro ao gravar no MySQL:', err);
-            return res.status(500).json({ error: err.message });
-        }
-        res.json({ success: true, affectedRows: results.affectedRows });
-    });
+    await conexao.query(query, [sorteios]);
+    conexao.release();
+
+    res.json({ sucesso: true, total: sorteios.length });
+  } catch (err) {
+    console.error('Erro ao importar sorteios no banco:', err);
+    res.status(500).json({ erro: err.message });
+  }
 });
