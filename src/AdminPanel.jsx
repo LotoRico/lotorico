@@ -2,6 +2,9 @@ import { useState } from 'react';
 import * as XLSX from 'xlsx';
 
 export default function AdminPanel() {
+  // MARCA DE VERSÃO EXATA PARA VALIDAÇÃO EM TELA
+  const VERSAO_BUILD = "Versão Atualizada: 07/08/2026 - 12:15 [BUILD-SEGURA]";
+
   const [status, setStatus] = useState('Aguardando ação.');
   const [dadosProcessados, setDadosProcessados] = useState([]);
   const [totalLinhas, setTotalLinhas] = useState(0);
@@ -42,7 +45,6 @@ export default function AdminPanel() {
           return isNaN(n) ? 10 : n;
         };
 
-        // Filtra apenas linhas cuja data seja de 2023 em diante
         const linhasFiltradas = jsonLinhas.filter(row => {
           const buscarChave = (termo) => {
             const alvo = termo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '');
@@ -55,7 +57,6 @@ export default function AdminPanel() {
           const dataSorteio = row[buscarChave('Data Sorteio')];
           if (!dataSorteio) return false;
 
-          // Extrai o ano considerando formato string (DD/MM/AAAA) ou serial do Excel
           let ano = 0;
           if (typeof dataSorteio === 'string') {
             const partes = dataSorteio.split('/');
@@ -63,7 +64,6 @@ export default function AdminPanel() {
               ano = parseInt(partes[2], 10);
             }
           } else if (typeof dataSorteio === 'number') {
-            // Conversão básica de data serial do Excel se necessário
             const dataConvertida = XLSX.SSF.parse_date_code(dataSorteio);
             if (dataConvertida) ano = dataConvertida.y;
           }
@@ -119,7 +119,7 @@ export default function AdminPanel() {
 
         setDadosProcessados(formatados);
         setTotalLinhas(formatados.length);
-        setStatus(`Filtro aplicado! ${formatados.length} concursos (de 2023 em diante) prontos para gravação.`);
+        setStatus(`Filtro aplicado! ${formatados.length} concursos (2023-2026) prontos.`);
 
       } catch (err) {
         console.error(err);
@@ -135,7 +135,7 @@ export default function AdminPanel() {
       return;
     }
 
-    setStatus('Gravando informações filtradas no banco de dados...');
+    setStatus('Gravando concursos no banco de dados (processo seguro)...');
 
     try {
       const resposta = await fetch('/api/importar-sorteios', {
@@ -154,7 +154,7 @@ export default function AdminPanel() {
 
       if (!resposta.ok) throw new Error(resultado.erro || 'Falha ao gravar no banco.');
 
-      setStatus(`Sucesso absoluto, Mestre! ${resultado.total || totalLinhas} concursos de 2023 pra cá gravados.`);
+      setStatus(`Sucesso absoluto, Mestre! ${resultado.total || totalLinhas} concursos gravados com sucesso.`);
     } catch (err) {
       console.error(err);
       setStatus(`Erro ao gravar: ${err.message}`);
@@ -163,6 +163,12 @@ export default function AdminPanel() {
 
   return (
     <div style={{ padding: '30px', border: '1px solid #444', borderRadius: '10px', maxWidth: '650px', margin: '30px auto', fontFamily: 'sans-serif', backgroundColor: '#18181b', color: '#f4f4f5' }}>
+      
+      {/* MARCA VISUAL DE VERSÃO NA TELA */}
+      <div style={{ marginBottom: '15px', padding: '6px 10px', backgroundColor: '#3f3f46', color: '#facc15', fontSize: '11px', fontWeight: 'bold', borderRadius: '6px', textAlign: 'center', letterSpacing: '0.5px' }}>
+        ⚡ {VERSAO_BUILD}
+      </div>
+
       <h2>⚙️ Painel de Administração - LotoRico</h2>
       
       <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#27272a', borderRadius: '8px' }}>
