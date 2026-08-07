@@ -92,7 +92,7 @@ export default function AdminPanel() {
 
         setDadosProcessados(formatados);
         setTotalLinhas(formatados.length);
-        setStatus(`Planilha carregada! ${formatados.length} concursos prontos para gravação.`);
+        setStatus(`Planilha carregada! ${formatados.length} concursos prontos.`);
 
       } catch (err) {
         console.error(err);
@@ -124,7 +124,7 @@ export default function AdminPanel() {
         throw new Error(resultado.erro || 'Falha ao gravar no banco.');
       }
 
-      setStatus(`Sucesso absoluto, Mestre! ${resultado.total || totalLinhas} concursos gravados no MySQL.`);
+      setStatus(`Sucesso absoluto, Mestre! ${resultado.total || totalLinhas} concursos gravados no banco.`);
 
     } catch (err) {
       console.error(err);
@@ -138,7 +138,7 @@ export default function AdminPanel() {
       
       {/* 1º Botão: UPLOAD CONCURSOS */}
       <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#27272a', borderRadius: '8px' }}>
-        <label htmlFor="input-file-concursos" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>1. Carregar Planilha:</label>
+        <label htmlFor="input-file-concursos" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>1. Selecionar Planilha:</label>
         <input 
           id="input-file-concursos"
           type="file" 
