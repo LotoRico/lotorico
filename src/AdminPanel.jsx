@@ -80,7 +80,6 @@ export default function AdminPanel() {
             row[buscarChave('Rateio 13 acertos')] || 0,
             row[buscarChave('Ganhadores 12 acertos')] || 0,
             row[buscarChave('Rateio 12 acertos')] || 0,
-            row[buscarCh_ave_11 = buscarChave('Ganhadores 11 acertos')] || 0, // mantido seguro
             row[buscarChave('Ganhadores 11 acertos')] || 0,
             row[buscarChave('Rateio 11 acertos')] || 0,
             row[buscarChave('Acumulado 15 acertos')] || 0,
@@ -113,7 +112,7 @@ export default function AdminPanel() {
     setStatus('Salvando concursos no banco de dados...');
 
     try {
-      const resposta = await fetch('http://localhost:3001/api/importar-sorteios', {
+      const resposta = await fetch('/api/importar-sorteios', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sorteios: dadosProcessados })
