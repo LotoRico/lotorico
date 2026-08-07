@@ -2,8 +2,8 @@ import { useState } from 'react';
 import * as XLSX from 'xlsx';
 
 export default function AdminPanel() {
-  // MARCA DE VERSÃO EXATA PARA VALIDAÇÃO EM TELA
-  const VERSAO_BUILD = "Versão Atualizada: 07/08/2026 - 12:15 [BUILD-SEGURA]";
+  // NOVA MARCA DE VERSÃO EXATA PARA GARANTIR RECARREGAMENTO
+  const VERSAO_BUILD = "Versão Atualizada: 07/08/2026 - 12:23 [BUILD-LOTE-TRANSAÇÃO]";
 
   const [status, setStatus] = useState('Aguardando ação.');
   const [dadosProcessados, setDadosProcessados] = useState([]);
@@ -135,7 +135,7 @@ export default function AdminPanel() {
       return;
     }
 
-    setStatus('Gravando concursos no banco de dados (processo seguro)...');
+    setStatus('Enviando lote de concursos para o servidor...');
 
     try {
       const resposta = await fetch('/api/importar-sorteios', {
@@ -145,11 +145,13 @@ export default function AdminPanel() {
       });
 
       const textoResposta = await resposta.text();
+      console.log("Resposta bruta do servidor:", textoResposta);
+
       let resultado;
       try {
         resultado = JSON.parse(textoResposta);
       } catch (e) {
-        throw new Error(`Servidor retornou resposta inválida: ${textoResposta || 'Resposta vazia'}`);
+        throw new Error(`Servidor retornou resposta inválida (Status ${resposta.status}): ${textoResposta || 'Resposta vazia'}`);
       }
 
       if (!resposta.ok) throw new Error(resultado.erro || 'Falha ao gravar no banco.');
