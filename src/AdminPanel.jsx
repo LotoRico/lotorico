@@ -115,7 +115,14 @@ export default function AdminPanel() {
         body: JSON.stringify({ sorteios: dadosProcessados })
       });
 
-      const resultado = await resposta.json();
+      const textoResposta = await resposta.text();
+      let resultado;
+      try {
+        resultado = JSON.parse(textoResposta);
+      } catch (e) {
+        throw new Error(`Servidor retornou resposta inválida: ${textoResposta || 'Resposta vazia'}`);
+      }
+
       if (!resposta.ok) throw new Error(resultado.erro || 'Falha ao gravar no banco.');
 
       setStatus(`Sucesso absoluto, Mestre! ${resultado.total || totalLinhas} concursos gravados no banco.`);
