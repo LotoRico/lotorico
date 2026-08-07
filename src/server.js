@@ -8,7 +8,9 @@ app.post('/api/importar-sorteios', async (req, res) => {
   let conexao;
   try {
     conexao = await pool.getConnection();
-    let totalInserido = 0;
+    
+    // Inicia transação segura
+    await conexao.beginTransaction();
 
     const query = `
       INSERT INTO sorteios (
@@ -19,7 +21,7 @@ app.post('/api/importar-sorteios', async (req, res) => {
         rateio_13_acertos, ganhadores_12_acertos, rateio_12_acertos, 
         ganhadores_11_acertos, rateio_11_acertos, acumulado_15_acertos, 
         arrecadacao_total, estimativa_premio, acumulado_sorteio_especial_independencia, observacao
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES ?
       ON DUPLICATE KEY UPDATE 
         data_sorteio = VALUES(data_sorteio),
         bola01 = VALUES(bola01), bola02 = VALUES(bola02), bola03 = VALUES(bola03), bola04 = VALUES(bola04), bola05 = VALUES(bola05),
@@ -35,17 +37,19 @@ app.post('/api/importar-sorteios', async (req, res) => {
         observacao = VALUES(observacao);
     `;
 
-    // Insere iterando com segurança total para evitar estouro de pacote no SQL
-    for (const linha of sorteios) {
-      await conexao.query(query, linha);
-      totalInserido++;
-    }
-
+    await conexao.query(query, [sorteios]);
+    
+    // Confirma a transação
+    await conexao.commit();
     conexao.release();
-    return res.json({ sucesso: true, total: totalInserido });
+
+    return res.json({ sucesso: true, total: sorteios.length });
   } catch (err) {
-    if (conexao) conexao.release();
-    console.error('Erro detalhado no servidor ao importar sorteios:', err);
+    if (conexao) {
+      await conexao.rollback();
+      conexao.release();
+    }
+    console.error('Erro crítico na importação:', err);
     return res.status(500).json({ erro: err.message });
   }
 });
