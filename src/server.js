@@ -1,4 +1,4 @@
-// Adicione esta rota no seu server.js
+// Rota para importar e salvar os sorteios no MySQL
 app.post('/api/importar-sorteios', async (req, res) => {
   const { sorteios } = req.body;
 
@@ -7,9 +7,8 @@ app.post('/api/importar-sorteios', async (req, res) => {
   }
 
   try {
-    const conexao = await pool.getConnection(); // Considerando seu pool do mysql2/promise
+    const conexao = await pool.getConnection();
 
-    // Query de inserção em lote (substitui se o concurso já existir para evitar duplicidade)
     const query = `
       INSERT INTO sorteios (
         concurso, data_sorteio, bola01, bola02, bola03, bola04, bola05, 
