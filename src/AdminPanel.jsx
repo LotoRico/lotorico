@@ -10,7 +10,7 @@ export default function AdminPanel() {
     const arquivo = e.target.files[0];
     if (!arquivo) return;
 
-    setStatus('Lendo dados da planilha...');
+    setStatus('Lendo dados da planilha e filtrando (a partir de 2023)...');
     const leitor = new FileReader();
 
     leitor.onload = (evento) => {
@@ -42,7 +42,36 @@ export default function AdminPanel() {
           return isNaN(n) ? 10 : n;
         };
 
-        const formatados = jsonLinhas.map((row) => {
+        // Filtra apenas linhas cuja data seja de 2023 em diante
+        const linhasFiltradas = jsonLinhas.filter(row => {
+          const buscarChave = (termo) => {
+            const alvo = termo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '');
+            return Object.keys(row).find(k => {
+              const chaveNorm = k.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '');
+              return chaveNorm === alvo;
+            });
+          };
+
+          const dataSorteio = row[buscarChave('Data Sorteio')];
+          if (!dataSorteio) return false;
+
+          // Extrai o ano considerando formato string (DD/MM/AAAA) ou serial do Excel
+          let ano = 0;
+          if (typeof dataSorteio === 'string') {
+            const partes = dataSorteio.split('/');
+            if (partes.length === 3) {
+              ano = parseInt(partes[2], 10);
+            }
+          } else if (typeof dataSorteio === 'number') {
+            // Conversão básica de data serial do Excel se necessário
+            const dataConvertida = XLSX.SSF.parse_date_code(dataSorteio);
+            if (dataConvertida) ano = dataConvertida.y;
+          }
+
+          return ano >= 2023;
+        });
+
+        const formatados = linhasFiltradas.map((row) => {
           const buscarChave = (termo) => {
             const alvo = termo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '');
             return Object.keys(row).find(k => {
@@ -90,7 +119,7 @@ export default function AdminPanel() {
 
         setDadosProcessados(formatados);
         setTotalLinhas(formatados.length);
-        setStatus(`Planilha carregada! ${formatados.length} concursos prontos para gravação.`);
+        setStatus(`Filtro aplicado! ${formatados.length} concursos (de 2023 em diante) prontos para gravação.`);
 
       } catch (err) {
         console.error(err);
@@ -106,7 +135,7 @@ export default function AdminPanel() {
       return;
     }
 
-    setStatus('Gravando informações no banco de dados...');
+    setStatus('Gravando informações filtradas no banco de dados...');
 
     try {
       const resposta = await fetch('/api/importar-sorteios', {
@@ -125,7 +154,7 @@ export default function AdminPanel() {
 
       if (!resposta.ok) throw new Error(resultado.erro || 'Falha ao gravar no banco.');
 
-      setStatus(`Sucesso absoluto, Mestre! ${resultado.total || totalLinhas} concursos gravados no banco.`);
+      setStatus(`Sucesso absoluto, Mestre! ${resultado.total || totalLinhas} concursos de 2023 pra cá gravados.`);
     } catch (err) {
       console.error(err);
       setStatus(`Erro ao gravar: ${err.message}`);
@@ -137,16 +166,16 @@ export default function AdminPanel() {
       <h2>⚙️ Painel de Administração - LotoRico</h2>
       
       <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#27272a', borderRadius: '8px' }}>
-        <label htmlFor="input-file-concursos" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>1. Selecionar Planilha:</label>
+        <label htmlFor="input-file-concursos" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>1. Selecionar Planilha (Filtro 2023+):</label>
         <input id="input-file-concursos" type="file" onChange={lidarComSelecaoArquivo} accept=".xlsx" style={{ display: 'none' }} />
         <label htmlFor="input-file-concursos" style={{ display: 'block', textAlign: 'center', padding: '12px', backgroundColor: '#3b82f6', color: '#fff', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
-          📂 UPLOAD CONCURSOS
+          📂 UPLOAD CONCURSOS (2023-2026)
         </label>
       </div>
 
       {totalLinhas > 0 && (
         <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#27272a', borderRadius: '8px', textAlign: 'center' }}>
-          <p style={{ marginBottom: '10px', color: '#4ade80', fontWeight: 'bold' }}>{totalLinhas} concursos processados e prontos.</p>
+          <p style={{ marginBottom: '10px', color: '#4ade80', fontWeight: 'bold' }}>{totalLinhas} concursos filtrados e prontos.</p>
           <button onClick={executarSalvarNoBanco} style={{ width: '100%', padding: '12px', backgroundColor: '#059669', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>
             💾 GRAVA DADOS
           </button>
