@@ -88,4 +88,148 @@ async function insertConcurso(dados) {
       bola01, bola02, bola03, bola04, bola05,
       bola06, bola07, bola08, bola09, bola10,
       bola11, bola12, bola13, bola14, bola15,
-      ganhadores_15_acertos,
+      ganhadores_15_acertos, cidade_uf, rateio_15_acertos,
+      ganhadores_14_acertos, rateio_14_acertos,
+      ganhadores_13_acertos, rateio_13_acertos,
+      ganhadores_12_acertos, rateio_12_acertos,
+      ganhadores_11_acertos, rateio_11_acertos,
+      acumulado_15_acertos, arrecadacao_total, estimativa_premio,
+      acumulado_sorteio_especial, observacao,
+      acumulado_sorteio_especial_independencia
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      data_sorteio = VALUES(data_sorteio),
+      bola01 = VALUES(bola01), bola02 = VALUES(bola02), bola03 = VALUES(bola03),
+      bola04 = VALUES(bola04), bola05 = VALUES(bola05), bola06 = VALUES(bola06),
+      bola07 = VALUES(bola07), bola08 = VALUES(bola08), bola09 = VALUES(bola09),
+      bola10 = VALUES(bola10), bola11 = VALUES(bola11), bola12 = VALUES(bola12),
+      bola13 = VALUES(bola13), bola14 = VALUES(bola14), bola15 = VALUES(bola15),
+      ganhadores_15_acertos = VALUES(ganhadores_15_acertos),
+      cidade_uf = VALUES(cidade_uf),
+      rateio_15_acertos = VALUES(rateio_15_acertos),
+      ganhadores_14_acertos = VALUES(ganhadores_14_acertos),
+      rateio_14_acertos = VALUES(rateio_14_acertos),
+      ganhadores_13_acertos = VALUES(ganhadores_13_acertos),
+      rateio_13_acertos = VALUES(rateio_13_acertos),
+      ganhadores_12_acertos = VALUES(ganhadores_12_acertos),
+      rateio_12_acertos = VALUES(rateio_12_acertos),
+      ganhadores_11_acertos = VALUES(ganhadores_11_acertos),
+      rateio_11_acertos = VALUES(rateio_11_acertos),
+      acumulado_15_acertos = VALUES(acumulado_15_acertos)
+  `;
+
+  const valores = [
+    concurso, dataSorteio,
+    dezenas[0], dezenas[1], dezenas[2], dezenas[3], dezenas[4],
+    dezenas[5], dezenas[6], dezenas[7], dezenas[8], dezenas[9],
+    dezenas[10], dezenas[11], dezenas[12], dezenas[13], dezenas[14],
+    prem.ganhadores_15, cidadeUf, prem.rateio_15,
+    prem.ganhadores_14, prem.rateio_14,
+    prem.ganhadores_13, prem.rateio_13,
+    prem.ganhadores_12, prem.rateio_12,
+    prem.ganhadores_11, prem.rateio_11,
+    acumulado, null, null, null, null, null
+  ];
+
+  await pool.execute(sql, valores);
+  return true;
+}
+
+async function importarTodos() {
+  const resultado = { importados: 0, falhas: 0, total: 0, detalhes: [] };
+  const ultimo = await buscarConcurso('ultimo');
+  const ultimoConcursoAPI = parseInt(ultimo.concurso, 10);
+  const ultimoConcursoBanco = await getUltimoConcursoBanco();
+
+  if (ultimoConcursoBanco >= ultimoConcursoAPI) {
+    resultado.mensagem = 'Banco já está atualizado!';
+    return resultado;
+  }
+
+  const inicio = ultimoConcursoBanco + 1;
+  const total = ultimoConcursoAPI - ultimoConcursoBanco;
+  resultado.total = total;
+
+  for (let concurso = inicio; concurso <= ultimoConcursoAPI; concurso++) {
+    try {
+      const dados = await buscarConcurso(concurso);
+      const sucesso = await insertConcurso(dados);
+      if (sucesso) resultado.importados++;
+      else resultado.falhas++;
+
+      if (resultado.importados > 0 && resultado.importados % 50 === 0) {
+        await esperar(DELAY_ENTRE_LOTES);
+      } else {
+        await esperar(DELAY_ENTRE_REQUISICOES);
+      }
+    } catch (error) {
+      resultado.falhas++;
+      resultado.detalhes.push(`Concurso ${concurso}: ${error.message}`);
+      if (error.message.includes('404')) break;
+      await esperar(DELAY_ENTRE_REQUISICOES);
+    }
+  }
+
+  resultado.totalBanco = await getUltimoConcursoBanco();
+  return resultado;
+}
+
+async function atualizarNovos() {
+  const resultado = { importados: 0, falhas: 0, detalhes: [] };
+  const ultimoBanco = await getUltimoConcursoBanco();
+  const ultimo = await buscarConcurso('ultimo');
+  const ultimoAPI = parseInt(ultimo.concurso, 10);
+
+  if (ultimoBanco >= ultimoAPI) {
+    resultado.mensagem = 'Banco já está atualizado!';
+    return resultado;
+  }
+
+  for (let concurso = ultimoBanco + 1; concurso <= ultimoAPI; concurso++) {
+    try {
+      const dados = await buscarConcurso(concurso);
+      const ok = await insertConcurso(dados);
+      if (ok) resultado.importados++;
+      else resultado.falhas++;
+      await esperar(DELAY_ENTRE_REQUISICOES);
+    } catch (error) {
+      resultado.falhas++;
+      resultado.detalhes.push(`Concurso ${concurso}: ${error.message}`);
+    }
+  }
+
+  resultado.totalBanco = await getUltimoConcursoBanco();
+  return resultado;
+}
+
+module.exports = async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  const modo = req.query.modo || req.query.m || 'atualizar';
+
+  try {
+    let resultado;
+    if (modo === 'completo') {
+      resultado = await importarTodos();
+    } else {
+      resultado = await atualizarNovos();
+    }
+
+    return res.status(200).json({
+      sucesso: true,
+      modo: modo,
+      ...resultado
+    });
+  } catch (error) {
+    return res.status(500).json({
+      sucesso: false,
+      erro: error.message
+    });
+  }
+};
