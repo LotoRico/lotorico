@@ -1,13 +1,7 @@
 {
-  "name": "loto-rico-backend",
+  "name": "lotorico-backend",
   "version": "1.0.0",
-  "description": "Backend do Loto Rico - API e importação de resultados",
-  "main": "api/importar-sorteios.js",
-  "scripts": {
-    "importar": "node api/importar-sorteios.js completo",
-    "atualizar": "node api/importar-sorteios.js atualizar"
-  },
   "dependencies": {
-    "mysql2": "^3.11.0"
+    "mysql2": "^3.9.0"
   }
 }
