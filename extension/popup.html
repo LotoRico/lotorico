@@ -1,0 +1,46 @@
+<!-- popup.html -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { width: 320px; font-family: 'Segoe UI', sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 16px; }
+    .header { text-align: center; margin-bottom: 16px; }
+    .header h1 { font-size: 20px; color: #a855f7; margin: 0; font-weight: 700; }
+    .header p { font-size: 11px; color: #94a3b8; margin: 4px 0 0 0; }
+    .card { background-color: #1e293b; border-radius: 8px; padding: 12px; border: 1px solid #334155; margin-bottom: 12px; }
+    .instruction { font-size: 11px; color: #cbd5e1; line-height: 1.4; margin-bottom: 10px; }
+    input[type="file"] { display: none; }
+    .file-label { display: block; text-align: center; background-color: #334155; color: #f8fafc; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: background 0.2s; border: 1px dashed #64748b; }
+    .file-label:hover { background-color: #475569; }
+    .file-info { font-size: 11px; color: #10b981; text-align: center; margin-top: 8px; display: none; }
+    .btn-row { display: flex; gap: 8px; margin-bottom: 4px; }
+    .btn-row button { flex: 1; }
+    button { background-color: #a855f7; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+    button:hover { background-color: #9333ea; }
+    button:disabled { background-color: #475569; cursor: not-allowed; }
+    .btn-diag { background-color: #334155; font-size: 11px; padding: 8px; }
+    .btn-diag:hover { background-color: #475569; }
+    .btn-diag:disabled { background-color: #334155; cursor: not-allowed; }
+    .log-container { margin-top: 12px; background-color: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 8px; height: 150px; overflow-y: auto; font-family: monospace; font-size: 10px; color: #38bdf8; }
+    .log-entry { margin-bottom: 4px; line-height: 1.2; }
+    .status { font-size: 11px; text-align: center; color: #94a3b8; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="header"><h1>Loto Rico</h1><p>Automação de Volantes da Lotofácil</p></div>
+  <div class="card">
+    <div class="instruction"><strong>Instruções:</strong><br>1. Certifique-se de estar na tela da Lotofácil.<br>2. Importe o arquivo .txt com seus jogos.<br>3. O robô tentará ajustar a quantidade de dezenas e preencher os volantes automaticamente.</div>
+    <label for="txt-file" class="file-label" id="label-text">Selecionar Arquivo .txt</label>
+    <input type="file" id="txt-file" accept=".txt">
+    <div class="file-info" id="file-info">Nenhum arquivo carregado</div>
+  </div>
+  <div class="btn-row">
+    <button id="btn-start" disabled>Iniciar Automação</button>
+    <button id="btn-diagnostico" class="btn-diag">🔍 Diagnóstico</button>
+  </div>
+  <div class="status" id="status-text">Aguardando arquivo...</div>
+  <div class="log-container" id="log-screen"><div class="log-entry" style="color: #64748b;">[Sistema] Terminal de monitoramento pronto...</div></div>
+  <script src="popup.js"></script>
+</body>
+</html>
