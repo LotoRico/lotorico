@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Loto Rico - Robô de Cliques",
+  "version": "1.5",
+  "description": "Automação de preenchimento de jogos para a Lotofácil no site da Caixa.",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["https://*.caixa.gov.br/*"],
+  "action": { "default_popup": "popup.html" },
+  "content_scripts": [{ "matches": ["https://*.caixa.gov.br/*"], "js": ["content.js"] }]
+}
