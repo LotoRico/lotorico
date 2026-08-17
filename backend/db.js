@@ -1,6 +1,6 @@
 const mysql = require('mysql2/promise');
 
-const pool = mysql.createPool({
+const pool = mysql.createPool(process.env.MYSQL_PUBLIC_URL || {
   host: process.env.MYSQLHOST,
   port: process.env.MYSQLPORT || 3306,
   user: process.env.MYSQLUSER,
