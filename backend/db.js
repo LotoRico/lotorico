@@ -1,3 +1,5 @@
+// Arquivo: db.js
+
 const mysql = require('mysql2/promise');
 
 const url = new URL(process.env.DATABASE_URL);
