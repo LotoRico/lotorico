@@ -1,3 +1,5 @@
+// Arquivo: importar-sorteios.js
+
 const https = require('https');
 const pool = require('../db');
 
