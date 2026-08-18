@@ -2,17 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/api/upload.js",
-      "use": "@vercel/node"
-    },
-    {
       "src": "backend/api/importar-sorteios.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
-    { "src": "/upload", "dest": "backend/api/upload.js" },
-    { "src": "/api/(.*)", "dest": "backend/api/importar-sorteios.js" },
     { "src": "/(.*)", "dest": "backend/api/importar-sorteios.js" }
   ]
 }
