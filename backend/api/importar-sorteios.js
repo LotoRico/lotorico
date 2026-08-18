@@ -1,237 +1,179 @@
-// Arquivo: importar-sorteios.js
-
-const https = require('https');
+// importar-sorteios.js
 const pool = require('../db');
+const XLSX = require('xlsx');
 
-const API_BASE = 'https://api.guidi.dev.br/loteria/lotofacil';
-const DELAY_ENTRE_REQUISICOES = 1500;
-const DELAY_ENTRE_LOTES = 5000;
-
-function esperar(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function buscarConcurso(concurso) {
-  return new Promise((resolve, reject) => {
-    const url = concurso === 'ultimo'
-      ? `${API_BASE}/ultimo`
-      : `${API_BASE}/${concurso}`;
-    https.get(url, (res) => {
-      let data = '';
-      res.on('data', (chunk) => { data += chunk; });
-      res.on('end', () => {
-        if (res.statusCode !== 200) {
-          reject(new Error(`HTTP ${res.statusCode} no concurso ${concurso}`));
-          return;
-        }
-        try { resolve(JSON.parse(data)); }
-        catch (e) { reject(new Error(`Erro ao parsear JSON do concurso ${concurso}: ${e.message}`)); }
-      });
-      res.on('error', (e) => reject(e));
-    }).on('error', (e) => reject(e));
-  });
-}
-
-function extrairPremiacao(dados) {
-  const resultado = {
-    ganhadores_15: null, rateio_15: null,
-    ganhadores_14: null, rateio_14: null,
-    ganhadores_13: null, rateio_13: null,
-    ganhadores_12: null, rateio_12: null,
-    ganhadores_11: null, rateio_11: null
-  };
-  if (!dados.premiacao || !Array.isArray(dados.premiacao)) return resultado;
-  for (const faixa of dados.premiacao) {
-    const acertos = parseInt((faixa.acertos || '').replace(/\D/g, ''), 10);
-    const ganhadores = parseInt((faixa.ganhadores || '0').replace(/\D/g, ''), 10) || null;
-    const premio = faixa.premio || null;
-    switch (acertos) {
-      case 15: resultado.ganhadores_15 = ganhadores; resultado.rateio_15 = premio; break;
-      case 14: resultado.ganhadores_14 = ganhadores; resultado.rateio_14 = premio; break;
-      case 13: resultado.ganhadores_13 = ganhadores; resultado.rateio_13 = premio; break;
-      case 12: resultado.ganhadores_12 = ganhadores; resultado.rateio_12 = premio; break;
-      case 11: resultado.ganhadores_11 = ganhadores; resultado.rateio_11 = premio; break;
-    }
+function parseDate(val) {
+  if (!val && val !== 0) return null;
+  if (val instanceof Date) return val.toISOString().slice(0, 10);
+  const str = String(val).trim();
+  const parts = str.split('/');
+  if (parts.length === 3) {
+    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
   }
-  return resultado;
+  return str;
 }
 
-function extrairCidadeUF(dados) {
-  if (!dados.estadosPremiados || !Array.isArray(dados.estadosPremiados)) return null;
-  const cidades = dados.estadosPremiados.map(ep => {
-    const uf = ep.uf || '';
-    const cidade = ep.cidade || '';
-    const num = ep.numeroGanhadores || '1';
-    return `${cidade}/${uf} (${num})`;
-  });
-  return cidades.length > 0 ? cidades.join('; ') : null;
+function parseNum(val) {
+  if (val === null || val === undefined || val === '') return null;
+  const cleaned = String(val).replace(/[R$\s.]/g, '').replace(',', '.');
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? null : num;
 }
 
-async function getUltimoConcursoBanco() {
-  const [rows] = await pool.execute('SELECT MAX(concurso) as max_concurso FROM sorteios');
-  if (rows[0].max_concurso === null) return 0;
-  return rows[0].max_concurso;
+function parseIntOrNull(val) {
+  if (val === null || val === undefined || val === '') return null;
+  const num = parseInt(String(val).replace(/\D/g, ''), 10);
+  return isNaN(num) ? null : num;
 }
 
-async function insertConcurso(dados) {
-  const concurso = parseInt(dados.concurso, 10);
-  const dataSorteio = dados.data;
-  if (!dataSorteio) return false;
-  if (!dados.dezenas || dados.dezenas.length !== 15) return false;
+function getCol(row, keys) {
+  for (const k of keys) {
+    if (row[k] !== undefined && row[k] !== null && row[k] !== '') return row[k];
+  }
+  return null;
+}
 
-  const dezenas = dados.dezenas.map(d => parseInt(d, 10)).sort((a, b) => a - b);
-  const prem = extrairPremiacao(dados);
-  const cidadeUf = extrairCidadeUF(dados);
-  const acumulado = dados.acumulou ? 'Sim' : 'Não';
-
-  const sql = `
-    INSERT INTO sorteios (
-      concurso, data_sorteio,
-      bola01, bola02, bola03, bola04, bola05,
-      bola06, bola07, bola08, bola09, bola10,
-      bola11, bola12, bola13, bola14, bola15,
-      ganhadores_15_acertos, cidade_uf, rateio_15_acertos,
-      ganhadores_14_acertos, rateio_14_acertos,
-      ganhadores_13_acertos, rateio_13_acertos,
-      ganhadores_12_acertos, rateio_12_acertos,
-      ganhadores_11_acertos, rateio_11_acertos,
-      acumulado_15_acertos, arrecadacao_total, estimativa_premio,
-      acumulado_sorteio_especial, observacao,
-      acumulado_sorteio_especial_independencia
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE
-      data_sorteio = VALUES(data_sorteio),
-      bola01 = VALUES(bola01), bola02 = VALUES(bola02), bola03 = VALUES(bola03),
-      bola04 = VALUES(bola04), bola05 = VALUES(bola05), bola06 = VALUES(bola06),
-      bola07 = VALUES(bola07), bola08 = VALUES(bola08), bola09 = VALUES(bola09),
-      bola10 = VALUES(bola10), bola11 = VALUES(bola11), bola12 = VALUES(bola12),
-      bola13 = VALUES(bola13), bola14 = VALUES(bola14), bola15 = VALUES(bola15),
-      ganhadores_15_acertos = VALUES(ganhadores_15_acertos),
-      cidade_uf = VALUES(cidade_uf),
-      rateio_15_acertos = VALUES(rateio_15_acertos),
-      ganhadores_14_acertos = VALUES(ganhadores_14_acertos),
-      rateio_14_acertos = VALUES(rateio_14_acertos),
-      ganhadores_13_acertos = VALUES(ganhadores_13_acertos),
-      rateio_13_acertos = VALUES(rateio_13_acertos),
-      ganhadores_12_acertos = VALUES(ganhadores_12_acertos),
-      rateio_12_acertos = VALUES(rateio_12_acertos),
-      ganhadores_11_acertos = VALUES(ganhadores_11_acertos),
-      rateio_11_acertos = VALUES(rateio_11_acertos),
-      acumulado_15_acertos = VALUES(acumulado_15_acertos)
-  `;
-
-  const valores = [
-    concurso, dataSorteio,
-    dezenas[0], dezenas[1], dezenas[2], dezenas[3], dezenas[4],
-    dezenas[5], dezenas[6], dezenas[7], dezenas[8], dezenas[9],
-    dezenas[10], dezenas[11], dezenas[12], dezenas[13], dezenas[14],
-    prem.ganhadores_15, cidadeUf, prem.rateio_15,
-    prem.ganhadores_14, prem.rateio_14,
-    prem.ganhadores_13, prem.rateio_13,
-    prem.ganhadores_12, prem.rateio_12,
-    prem.ganhadores_11, prem.rateio_11,
-    acumulado, null, null, null, null, null
+function mapRow(row) {
+  return [
+    parseIntOrNull(getCol(row, ['Concurso'])),
+    parseDate(getCol(row, ['Data Sorteio'])),
+    parseIntOrNull(getCol(row, ['Bola1'])),
+    parseIntOrNull(getCol(row, ['Bola2'])),
+    parseIntOrNull(getCol(row, ['Bola3'])),
+    parseIntOrNull(getCol(row, ['Bola4'])),
+    parseIntOrNull(getCol(row, ['Bola5'])),
+    parseIntOrNull(getCol(row, ['Bola6'])),
+    parseIntOrNull(getCol(row, ['Bola7'])),
+    parseIntOrNull(getCol(row, ['Bola8'])),
+    parseIntOrNull(getCol(row, ['Bola9'])),
+    parseIntOrNull(getCol(row, ['Bola10'])),
+    parseIntOrNull(getCol(row, ['Bola11'])),
+    parseIntOrNull(getCol(row, ['Bola12'])),
+    parseIntOrNull(getCol(row, ['Bola13'])),
+    parseIntOrNull(getCol(row, ['Bola14'])),
+    parseIntOrNull(getCol(row, ['Bola15'])),
+    parseIntOrNull(getCol(row, ['Ganhadores 15 acertos'])),
+    getCol(row, ['Cidade / UF']),
+    parseNum(getCol(row, ['Rateio 15 acertos'])),
+    parseIntOrNull(getCol(row, ['Ganhadores 14 acertos'])),
+    parseNum(getCol(row, ['Rateio 14 acertos'])),
+    parseIntOrNull(getCol(row, ['Ganhadores 13 acertos'])),
+    parseNum(getCol(row, ['Rateio 13 acertos'])),
+    parseIntOrNull(getCol(row, ['Ganhadores 12 acertos'])),
+    parseNum(getCol(row, ['Rateio 12 acertos'])),
+    parseIntOrNull(getCol(row, ['Ganhadores 11 acertos'])),
+    parseNum(getCol(row, ['Rateio 11 acertos'])),
+    parseNum(getCol(row, ['Acumulado 15 acertos'])),
+    parseNum(getCol(row, ['Arrecadacao Total'])),
+    parseNum(getCol(row, ['Estimativa Prêmio', 'Estimativa Premio'])),
+    parseNum(getCol(row, [
+      'Acumulado sorteio especial Lotofácil da Independência',
+      'Acumulado sorteio especial Lotofacil da Independencia'
+    ])),
+    getCol(row, ['Observação'])
   ];
-
-  await pool.execute(sql, valores);
-  return true;
-}
-
-async function importarTodos() {
-  const resultado = { importados: 0, falhas: 0, total: 0, detalhes: [] };
-  const ultimo = await buscarConcurso('ultimo');
-  const ultimoConcursoAPI = parseInt(ultimo.concurso, 10);
-  const ultimoConcursoBanco = await getUltimoConcursoBanco();
-
-  if (ultimoConcursoBanco >= ultimoConcursoAPI) {
-    resultado.mensagem = 'Banco já está atualizado!';
-    return resultado;
-  }
-
-  const inicio = ultimoConcursoBanco + 1;
-  const total = ultimoConcursoAPI - ultimoConcursoBanco;
-  resultado.total = total;
-
-  for (let concurso = inicio; concurso <= ultimoConcursoAPI; concurso++) {
-    try {
-      const dados = await buscarConcurso(concurso);
-      const sucesso = await insertConcurso(dados);
-      if (sucesso) resultado.importados++;
-      else resultado.falhas++;
-
-      if (resultado.importados > 0 && resultado.importados % 50 === 0) {
-        await esperar(DELAY_ENTRE_LOTES);
-      } else {
-        await esperar(DELAY_ENTRE_REQUISICOES);
-      }
-    } catch (error) {
-      resultado.falhas++;
-      resultado.detalhes.push(`Concurso ${concurso}: ${error.message}`);
-      if (error.message.includes('404')) break;
-      await esperar(DELAY_ENTRE_REQUISICOES);
-    }
-  }
-
-  resultado.totalBanco = await getUltimoConcursoBanco();
-  return resultado;
-}
-
-async function atualizarNovos() {
-  const resultado = { importados: 0, falhas: 0, detalhes: [] };
-  const ultimoBanco = await getUltimoConcursoBanco();
-  const ultimo = await buscarConcurso('ultimo');
-  const ultimoAPI = parseInt(ultimo.concurso, 10);
-
-  if (ultimoBanco >= ultimoAPI) {
-    resultado.mensagem = 'Banco já está atualizado!';
-    return resultado;
-  }
-
-  for (let concurso = ultimoBanco + 1; concurso <= ultimoAPI; concurso++) {
-    try {
-      const dados = await buscarConcurso(concurso);
-      const ok = await insertConcurso(dados);
-      if (ok) resultado.importados++;
-      else resultado.falhas++;
-      await esperar(DELAY_ENTRE_REQUISICOES);
-    } catch (error) {
-      resultado.falhas++;
-      resultado.detalhes.push(`Concurso ${concurso}: ${error.message}`);
-    }
-  }
-
-  resultado.totalBanco = await getUltimoConcursoBanco();
-  return resultado;
 }
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const modo = req.query.modo || req.query.m || 'atualizar';
+  if (req.method === 'GET') {
+    try {
+      const [rows] = await pool.execute('SELECT COUNT(*) as total, MAX(concurso) as ultimo FROM sorteios');
+      return res.status(200).json({
+        sucesso: true,
+        totalRegistros: rows[0].total,
+        ultimoConcurso: rows[0].ultimo
+      });
+    } catch (error) {
+      return res.status(500).json({ sucesso: false, erro: error.message });
+    }
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Método não permitido. Use POST para importar ou GET para consultar.' });
+  }
 
   try {
-    let resultado;
-    if (modo === 'completo') {
-      resultado = await importarTodos();
-    } else {
-      resultado = await atualizarNovos();
+    let fileBuffer = null;
+
+    if (req.body && typeof req.body === 'string' && req.body.length > 0) {
+      fileBuffer = Buffer.from(req.body, 'base64');
+    } else if (req.body && req.body.file) {
+      fileBuffer = Buffer.from(req.body.file, 'base64');
     }
+
+    if (!fileBuffer) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado. Envie o XLSX em base64 no body.' });
+    }
+
+    const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+
+    if (rows.length === 0) {
+      return res.status(400).json({ error: 'Planilha vazia ou sem dados válidos.' });
+    }
+
+    const values = rows.map(mapRow).filter(v => v[0] !== null);
+
+    if (values.length === 0) {
+      return res.status(400).json({ error: 'Nenhuma linha válida encontrada (coluna Concurso vazia).' });
+    }
+
+    const sql = `
+      INSERT INTO sorteios (
+        concurso, data_sorteio, bola1, bola2, bola3, bola4, bola5, bola6, bola7,
+        bola8, bola9, bola10, bola11, bola12, bola13, bola14, bola15,
+        ganhadores_15_acertos, cidade_uf, rateio_15_acertos,
+        ganhadores_14_acertos, rateio_14_acertos,
+        ganhadores_13_acertos, rateio_13_acertos,
+        ganhadores_12_acertos, rateio_12_acertos,
+        ganhadores_11_acertos, rateio_11_acertos,
+        acumulado_15_acertos, arrecadacao_total, estimativa_premio,
+        acumulado_sorteio_especial_lotofacil_independencia, observacao
+      ) VALUES ? ON DUPLICATE KEY UPDATE
+        data_sorteio = VALUES(data_sorteio),
+        bola1 = VALUES(bola1), bola2 = VALUES(bola2), bola3 = VALUES(bola3),
+        bola4 = VALUES(bola4), bola5 = VALUES(bola5), bola6 = VALUES(bola6),
+        bola7 = VALUES(bola7), bola8 = VALUES(bola8), bola9 = VALUES(bola9),
+        bola10 = VALUES(bola10), bola11 = VALUES(bola11), bola12 = VALUES(bola12),
+        bola13 = VALUES(bola13), bola14 = VALUES(bola14), bola15 = VALUES(bola15),
+        ganhadores_15_acertos = VALUES(ganhadores_15_acertos),
+        cidade_uf = VALUES(cidade_uf),
+        rateio_15_acertos = VALUES(rateio_15_acertos),
+        ganhadores_14_acertos = VALUES(ganhadores_14_acertos),
+        rateio_14_acertos = VALUES(rateio_14_acertos),
+        ganhadores_13_acertos = VALUES(ganhadores_13_acertos),
+        rateio_13_acertos = VALUES(rateio_13_acertos),
+        ganhadores_12_acertos = VALUES(ganhadores_12_acertos),
+        rateio_12_acertos = VALUES(rateio_12_acertos),
+        ganhadores_11_acertos = VALUES(ganhadores_11_acertos),
+        rateio_11_acertos = VALUES(rateio_11_acertos),
+        acumulado_15_acertos = VALUES(acumulado_15_acertos),
+        arrecadacao_total = VALUES(arrecadacao_total),
+        estimativa_premio = VALUES(estimativa_premio),
+        acumulado_sorteio_especial_lotofacil_independencia = VALUES(acumulado_sorteio_especial_lotofacil_independencia),
+        observacao = VALUES(observacao)
+    `;
+
+    const [result] = await pool.query(sql, [values]);
 
     return res.status(200).json({
       sucesso: true,
-      modo: modo,
-      ...resultado
+      linhasProcessadas: values.length,
+      affectedRows: result.affectedRows,
+      mensagem: `${values.length} registros processados com sucesso.`
     });
+
   } catch (error) {
-    return res.status(500).json({
-      sucesso: false,
-      erro: error.message
-    });
+    console.error('Erro na importação:', error);
+    return res.status(500).json({ sucesso: false, erro: error.message });
   }
 };
