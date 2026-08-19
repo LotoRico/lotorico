@@ -11,8 +11,6 @@ const LOTERIAS_SUPORTADAS = {
 
 /**
  * Busca o resultado mais recente de uma loteria.
- * @param {string} loteria - Slug: 'lotofacil', 'megasena', etc.
- * @returns {Promise<Object>} Objeto normalizado
  */
 async function buscarUltimoResultado(loteria = 'lotofacil') {
   const url = `${CAIXA_API_BASE}/${loteria}`;
@@ -34,9 +32,6 @@ async function buscarUltimoResultado(loteria = 'lotofacil') {
 
 /**
  * Busca um concurso específico pelo número.
- * @param {string} loteria
- * @param {number} concursoNumero
- * @returns {Promise<Object|null>} Null se não existir
  */
 async function buscarResultadoPorConcurso(loteria = 'lotofacil', concursoNumero) {
   const url = `${CAIXA_API_BASE}/${loteria}/${concursoNumero}`;
@@ -59,14 +54,12 @@ async function buscarResultadoPorConcurso(loteria = 'lotofacil', concursoNumero)
 
 /**
  * Normaliza o JSON da Caixa para o formato interno do Loto Rico.
- * Trata variações de nomenclatura entre diferentes loterias.
  */
 function normalizarResultado(data, loteria) {
   const config = LOTERIAS_SUPORTADAS[loteria] || LOTERIAS_SUPORTADAS.lotofacil;
 
   const concurso = parseInt(data.numero || data.concurso, 10);
 
-  // Dezenas: a Caixa pode usar diferentes nomes de campo
   const dezenasRaw = data.dezenasSorteadas || data.listaDezenas || data.dezenas || [];
   const dezenas = dezenasRaw
     .map(d => parseInt(String(d).replace(/\D/g, ''), 10))
@@ -77,14 +70,12 @@ function normalizarResultado(data, loteria) {
     throw new Error(`Dezenas insuficientes: ${dezenas.length} (mínimo: ${config.minDezenas})`);
   }
 
-  // Data: pode vir ISO ou DD/MM/YYYY
   let dataSorteio = data.dataApuracao || data.dataSorteio || data.data || '';
   if (dataSorteio.includes('/')) {
     const [dia, mes, ano] = dataSorteio.split('/');
     dataSorteio = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
   }
 
-  // Rateios e ganhadores por faixa
   const rateios = data.listaRateioPremio || data.rateios || [];
   const metadados = {
     ganhadores: {},
@@ -99,11 +90,9 @@ function normalizarResultado(data, loteria) {
     }
   }
 
-  // Ganhadores principais (15 acertos / faixa 1)
   const ganhadoresPrincipais = metadados.ganhadores.faixa_1 ||
     parseInt(data.quantidadeGanhadores || 0, 10);
 
-  // Cidade/UF do primeiro ganhador
   let cidadeUf = null;
   if (data.listaMunicipioUFGanhadores && data.listaMunicipioUFGanhadores.length > 0) {
     const g = data.listaMunicipioUFGanhadores[0];
@@ -129,12 +118,6 @@ function normalizarResultado(data, loteria) {
 
 /**
  * Sincroniza concursos faltantes iterativamente.
- * Busca do último conhecido + 1 até o mais recente da Caixa.
- * @param {number} fromConcurso - Primeiro concurso a buscar
- * @param {number} toConcurso - Último concurso a buscar
- * @param {string} loteria
- * @param {Function} onProgress - Callback (atual, total, resultado)
- * @returns {Promise<Array>} Array de resultados normalizados
  */
 async function sincronizarConcursos(fromConcurso, toConcurso, loteria = 'lotofacil', onProgress = null) {
   const resultados = [];
@@ -150,12 +133,10 @@ async function sincronizarConcursos(fromConcurso, toConcurso, loteria = 'lotofac
         if (onProgress) onProgress(i + 1, total, resultado);
       }
     } catch (error) {
-      // Loga erro mas continua para o próximo concurso
       console.error(`Erro ao buscar concurso ${concursoNum}: ${error.message}`);
       if (onProgress) onProgress(i + 1, total, null, error);
     }
 
-    // Pausa de 200ms entre requisições para não sobrecarregar a API da Caixa
     if (i < total - 1) {
       await new Promise(resolve => setTimeout(resolve, 200));
     }
