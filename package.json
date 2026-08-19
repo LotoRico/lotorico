@@ -2,7 +2,7 @@
   "name": "lotorico-backend",
   "version": "1.0.0",
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   },
   "dependencies": {
     "mysql2": "^3.9.0",
