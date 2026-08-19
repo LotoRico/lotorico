@@ -1,16 +1,5 @@
 // api/estatisticas.js
-const mysql = require('mysql2/promise');
-const pool = mysql.createPool({
-  host: 'gateway01.us-east-1.prod.aws.tidbcloud.com',
-  port: 4000,
-  user: '2WyAswPCKR5Y5Cx.root',
-  password: 'Shx6HnjUAVj1pC41',
-  database: 'lotorico',
-  ssl: { rejectUnauthorized: true },
-  waitForConnections: true,
-  connectionLimit: 5,
-  queueLimit: 0
-});
+const pool = require('./_lib/db');
 // ===================== UTILITÁRIOS =====================
 function setHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,15 +8,10 @@ function setHeaders(res) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
 }
 function formatarData(d) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-}
-function formatarData(d) {
   if (!d) return null;
-  const date = new Date(d);
-  return date.toISOString().split('T')[0];
+  if (d instanceof Date) return d.toISOString().split('T')[0];
+  if (typeof d === 'string') return d.split('T')[0];
+  return null;
 }
 function extrairDezenas(s) {
   return [
