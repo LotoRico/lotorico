@@ -1,5 +1,5 @@
 // backend/api/atualizar.js
-const { query, execute } = require('./_lib/db');
+const pool = require('./_lib/db');
 const { buscarUltimoResultado, sincronizarConcursos, LOTERIAS_SUPORTADAS } = require('./_lib/caixa-client');
 
 /**
@@ -9,10 +9,6 @@ const { buscarUltimoResultado, sincronizarConcursos, LOTERIAS_SUPORTADAS } = req
  * Query params:
  *   - loteria: 'lotofacil' (default), 'megasena', 'quina', 'lotomania'
  *   - forcar: 'true' para re-sincronizar mesmo sem concursos faltantes
- *
- * Response (JSON):
- *   { success, loteria, ultimoConcursoDB, ultimoConcursoCaixa,
- *     sincronizados, totalBuscados, duracaoMs, erros: [] }
  */
 module.exports = async (req, res) => {
   const startTime = Date.now();
@@ -43,23 +39,15 @@ module.exports = async (req, res) => {
   let totalBuscados = 0;
 
   try {
-    // 1. Descobrir o último concurso no banco
-    // Tenta schema multi-loteria primeiro; faz fallback para schema antigo
+    // 1. Descobrir o último concurso no banco (schema antigo: sem loteria_id)
     let ultimoConcursoDB = 0;
-    let schemaAntigo = false;
 
     try {
-      const rowsNovo = await query(
-        `SELECT MAX(concurso) as ultimo FROM sorteios
-         WHERE loteria_id = (SELECT id FROM loterias WHERE slug = ?)`,
-        [loteria]
-      );
-      ultimoConcursoDB = rowsNovo[0]?.ultimo || 0;
+      const [rows] = await pool.query('SELECT MAX(concurso) as ultimo FROM sorteios');
+      ultimoConcursoDB = rows[0]?.ultimo || 0;
     } catch {
-      // Tabela loterias não existe — usa schema antigo (sem loteria_id)
-      schemaAntigo = true;
-      const rowsAntigo = await query('SELECT MAX(concurso) as ultimo FROM sorteios');
-      ultimoConcursoDB = rowsAntigo[0]?.ultimo || 0;
+      // Tabela pode não existir ainda
+      ultimoConcursoDB = 0;
     }
 
     // 2. Buscar o resultado mais recente da Caixa
@@ -116,17 +104,12 @@ module.exports = async (req, res) => {
       }
     );
 
-    // 7. Inserir resultados no banco
+    // 7. Inserir resultados no banco (schema antigo: bola1..bola15)
     for (const r of resultados) {
       try {
-        if (schemaAntigo) {
-          await inserirSchemaAntigo(r);
-        } else {
-          await inserirSchemaNovo(r, loteria);
-        }
+        await inserirSorteio(r);
         sincronizados++;
       } catch (insertErr) {
-        // Ignora duplicados (concurso já existe)
         if (!insertErr.message.includes('Duplicate')) {
           erros.push({ concurso: r.concurso, erro: `Insert: ${insertErr.message}` });
         }
@@ -165,13 +148,9 @@ module.exports = async (req, res) => {
   }
 };
 
-// ===================== FUNÇÕES DE INSERÇÃO =====================
+// ===================== FUNÇÃO DE INSERÇÃO =====================
 
-/**
- * Insere usando o schema original (bola1..bola15).
- * Usado enquanto a migração multi-loteria não for feita.
- */
-async function inserirSchemaAntigo(r) {
+async function inserirSorteio(r) {
   const dezenas = r.dezenas;
   const bolas = [];
   for (let i = 0; i < 15; i++) {
@@ -182,7 +161,7 @@ async function inserirSchemaAntigo(r) {
   const ganhadores = metadados.ganhadores || {};
   const rateios = metadados.rateios || {};
 
-  await execute(
+  await pool.execute(
     `INSERT INTO sorteios (
       concurso, data_sorteio, bola1, bola2, bola3, bola4, bola5,
       bola6, bola7, bola8, bola9, bola10, bola11, bola12, bola13, bola14, bola15,
@@ -209,36 +188,6 @@ async function inserirSchemaAntigo(r) {
       r.estimativa_premio || 0,
       r.acumulado_especial || 0,
       r.observacao,
-    ]
-  );
-}
-
-/**
- * Insere usando o schema multi-loteria (dezenas JSON, loteria_id).
- * Usado após a migração para o novo modelo.
- */
-async function inserirSchemaNovo(r, loteria) {
-  await execute(
-    `INSERT INTO sorteios (
-      loteria_id, concurso, data_sorteio, dezenas, cidade_uf,
-      arrecadacao_total, estimativa_premio, acumulado,
-      acumulado_sorteio_especial, observacao, metadados
-    ) VALUES (
-      (SELECT id FROM loterias WHERE slug = ?), ?, ?, ?, ?,
-      ?, ?, ?, ?, ?, ?
-    )`,
-    [
-      loteria,
-      r.concurso,
-      r.data_sorteio,
-      JSON.stringify(r.dezenas),
-      r.cidade_uf,
-      r.arrecadacao_total || 0,
-      r.estimativa_premio || 0,
-      r.acumulado || 0,
-      r.acumulado_especial || 0,
-      r.observacao,
-      r.metadados,
     ]
   );
 }
