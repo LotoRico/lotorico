@@ -1,11 +1,19 @@
 {
-  "name": "lotorico-backend",
+  "name": "lotorico",
+  "private": true,
   "version": "1.0.0",
-  "engines": {
-    "node": "24.x"
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "mysql2": "^3.9.0",
-    "xlsx": "^0.18.5"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "mysql2": "^3.11.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.0"
   }
 }
