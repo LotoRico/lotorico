@@ -1,6 +1,6 @@
 // api/atualizar.js
 const pool = require('./_lib/db');
-const { fetchConcurso, parseConcurso } = require('./_lib/caixa-client');
+const { fetchConcurso } = require('./_lib/caixa-client');
 
 function setHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -43,8 +43,7 @@ module.exports = async (req, res) => {
     for (let i = 0; i < limite; i++) {
       const concurso = ultimoBanco + 1 + i;
       try {
-        const resultado = await fetchConcurso(concurso);
-        const dados = parseConcurso(resultado);
+        const dados = await fetchConcurso(concurso);
 
         await pool.query(
           `INSERT INTO sorteios
