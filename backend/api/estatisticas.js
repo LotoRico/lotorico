@@ -1,5 +1,5 @@
 // backend/api/estatisticas.js
-const pool = require('../db');
+const pool = require('./_lib/db');
 
 // ===================== UTILITÁRIOS =====================
 
@@ -73,9 +73,9 @@ function classificarTermico(frequencia) {
     .sort((a, b) => b.f - a.f);
 
   return {
-    quentes: ord.slice(0, 8).map(e => e.n),    // Top 8 (vermelho)
-    mornos: ord.slice(8, 17).map(e => e.n),     // 9 centrais (amarelo)
-    frios: ord.slice(17, 25).map(e => e.n)      // Bottom 8 (azul)
+    quentes: ord.slice(0, 8).map(e => e.n),
+    mornos: ord.slice(8, 17).map(e => e.n),
+    frios: ord.slice(17, 25).map(e => e.n)
   };
 }
 
@@ -167,7 +167,7 @@ function calcSequencias(sorteios) {
   };
 }
 
-// 8. DISTRIBUIÇÃO ESPACIAL — linhas e colunas do volante 5×5
+// 8. DISTRIBUIÇÃO ESPACIAL — Linhas e colunas do volante 5×5
 function calcDistribuicaoEspacial(sorteios) {
   const linhas = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   const colunas = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
