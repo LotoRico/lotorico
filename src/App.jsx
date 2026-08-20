@@ -183,14 +183,13 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="lottery-badge-container">
-        <span className="lottery-badge">Lotofácil</span>
-      </div>
-
       <div className="header">
-        <div>
-          <h1>Loto Rico</h1>
-          <p>Inteligência Estatística para Loterias</p>
+        <div className="header-left">
+          <div>
+            <h1>Loto Rico</h1>
+            <p>Inteligência Estatística para Loterias</p>
+          </div>
+          <span className="lottery-badge">Lotofácil</span>
         </div>
         <div className="header-actions">
           <button className="btn btn-secondary btn-sm" onClick={atualizarBanco}>Atualizar Banco</button>
