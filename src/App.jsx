@@ -358,7 +358,7 @@ export default function App() {
             <h2>{jogos.length} Jogo(s) Gerado(s)</h2>
             <div className="export-buttons">
               <button className="btn btn-success btn-sm" onClick={() => exportarTxt(jogos, dezenas)}>TXT</button>
-              <InfoIcon><strong>TXT</strong>: Formato da extensao Loto Rico para Chrome. Permite o upload automatico dos jogos no site da Caixa Economica Federal.</InfoIcon>
+              <InfoIcon><strong>TXT</strong>: Formato da extensao Loto Rico para Chrome. Permite o upload dos jogos no site da Caixa Economica Federal.</InfoIcon>
               <button className="btn btn-secondary btn-sm" onClick={() => exportarPDF(jogos, dezenas, estrategia, janela)}>PDF</button>
               <InfoIcon><strong>PDF</strong>: Documento formatado com todas as informacoes dos jogos, estrategia utilizada e resumo estatistico. Ideal para impressao e arquivo.</InfoIcon>
               <button className="btn btn-secondary btn-sm" onClick={() => exportarCSV(jogos, dezenas, estrategia, janela)}>CSV</button>
