@@ -41,7 +41,7 @@ function exportarTxt(jogos, dezenas) {
   URL.revokeObjectURL(url)
 }
 
-function exportarXLSX(jogos, dezenas, estrategia, janela) {
+function exportarCSV(jogos, dezenas, estrategia, janela) {
   const data = new Date().toLocaleDateString('pt-BR')
   const hora = new Date().toLocaleTimeString('pt-BR')
   const estrat = getStrategyName(estrategia)
@@ -357,12 +357,14 @@ export default function App() {
           <div className="jogos-header">
             <h2>{jogos.length} Jogo(s) Gerado(s)</h2>
             <div className="export-buttons">
-              <button className="btn btn-success btn-sm" onClick={() => exportarTxt(jogos, dezenas)} title="Formato da extensão Loto Rico para Chrome - permite o upload dos jogos no site da Caixa">TXT</button>
+              <button className="btn btn-success btn-sm" onClick={() => exportarTxt(jogos, dezenas)}>TXT</button>
+              <InfoIcon><strong>TXT</strong>: Formato da extensao Loto Rico para Chrome. Permite o upload automatico dos jogos no site da Caixa Economica Federal.</InfoIcon>
               <button className="btn btn-secondary btn-sm" onClick={() => exportarPDF(jogos, dezenas, estrategia, janela)}>PDF</button>
-              <button className="btn btn-secondary btn-sm" onClick={() => exportarXLSX(jogos, dezenas, estrategia, janela)}>XLSX</button>
+              <InfoIcon><strong>PDF</strong>: Documento formatado com todas as informacoes dos jogos, estrategia utilizada e resumo estatistico. Ideal para impressao e arquivo.</InfoIcon>
+              <button className="btn btn-secondary btn-sm" onClick={() => exportarCSV(jogos, dezenas, estrategia, janela)}>CSV</button>
+              <InfoIcon><strong>CSV</strong>: Planilha com uma dezena por celula, cabecalho com dados da estrategia e informacoes completas. Compativel com Excel e Google Sheets.</InfoIcon>
             </div>
           </div>
-          <div className="export-note">TXT: formato da extensão Loto Rico para Chrome - permite o upload dos jogos no site da Caixa | PDF e XLSX: documentos com informações completas</div>
           <div className="jogos-grid">
             {jogos.map(jogo => (
               <div key={jogo.id} className="jogo-item">
