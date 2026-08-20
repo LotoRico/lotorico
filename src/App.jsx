@@ -6,11 +6,11 @@ async function fetchAPI(endpoint) {
   return resp.json()
 }
 
-function getThermalClass(classificacao, num) {
-  if (!classificacao) return ''
-  if (classificacao.quentes?.includes(num)) return 'thermal-quente'
-  if (classificacao.mornos?.includes(num)) return 'thermal-morno'
-  if (classificacao.frios?.includes(num)) return 'thermal-frio'
+function getThermalClass(c, num) {
+  if (!c) return ''
+  if (c.quentes?.includes(num)) return 'thermal-quente'
+  if (c.mornos?.includes(num)) return 'thermal-morno'
+  if (c.frios?.includes(num)) return 'thermal-frio'
   return ''
 }
 
@@ -29,7 +29,7 @@ function exportarTxt(jogos, dezenas) {
 
 function InfoIcon({ text }) {
   return (
-    <span className="info-icon">ⓘ<span className="info-tooltip">{text}</span></span>
+    <span className="info-icon">i<span className="info-tooltip">{text}</span></span>
   )
 }
 
@@ -53,7 +53,7 @@ export default function App() {
       const r = await fetchAPI(`estatisticas?janela=${janela}`)
       if (r.sucesso) setStats(r.dados)
     } catch (e) {
-      setErro('Erro ao carregar estatísticas')
+      setErro('Erro ao carregar estatisticas')
     }
     setLoadingStats(false)
   }
@@ -122,26 +122,22 @@ export default function App() {
 
   return (
     <div className="app">
-      {/* HEADER */}
       <div className="header">
         <div>
-          <h1>🎰 Loto Rico</h1>
-          <p>Inteligência Estatística para Loterias</p>
-          <span className="lottery-badge">🟣 Lotofácil</span>
+          <h1>Loto Rico</h1>
+          <p>Inteligencia Estatistica para Loterias</p>
+          <span className="lottery-badge">Lotofacil</span>
         </div>
         <div className="header-actions">
-          <button className="btn btn-secondary btn-sm" onClick={atualizarBanco}>
-            🔄 Atualizar Banco
-          </button>
+          <button className="btn btn-secondary btn-sm" onClick={atualizarBanco}>Atualizar Banco</button>
           <button className="btn btn-secondary btn-sm" onClick={carregarStats} disabled={loadingStats}>
-            {loadingStats ? '⏳ Carregando...' : '📊 Recarregar Stats'}
+            {loadingStats ? 'Carregando...' : 'Recarregar Stats'}
           </button>
         </div>
       </div>
 
       {erro && <div className="alert alert-error">{erro}</div>}
 
-      {/* DASHBOARD */}
       {stats && (
         <div className="dashboard">
           <div className="stat-card">
@@ -150,37 +146,36 @@ export default function App() {
             <div className="sub">Concurso {stats.concurso_final}</div>
           </div>
           <div className="stat-card">
-            <div className="label">Janela de Análise</div>
+            <div className="label">Janela de Analise</div>
             <div className="value">{stats.total_analisados}</div>
-            <div className="sub">Últimos concursos</div>
+            <div className="sub">Ultimos concursos</div>
           </div>
           <div className="stat-card">
-            <div className="label">Soma Média</div>
+            <div className="label">Soma Media</div>
             <div className="value">{stats.soma?.media}</div>
             <div className="sub">Min: {stats.soma?.minimo} | Max: {stats.soma?.maximo}</div>
           </div>
           <div className="stat-card">
-            <div className="label">Pares / Ímpares</div>
+            <div className="label">Pares / Impares</div>
             <div className="value">{stats.paridade?.media_pares} / {stats.paridade?.media_impares}</div>
-            <div className="sub">Média histórica</div>
+            <div className="sub">Media historica</div>
           </div>
           <div className="stat-card">
-            <div className="label">Repetição Média</div>
+            <div className="label">Repeticao Media</div>
             <div className="value">{stats.repeticao?.media_repeticao}</div>
-            <div className="sub">Última: {stats.repeticao?.ultima_repeticao}</div>
+            <div className="sub">Ultima: {stats.repeticao?.ultima_repeticao}</div>
           </div>
           <div className="stat-card">
-            <div className="label">Sequências Média</div>
+            <div className="label">Sequencias Media</div>
             <div className="value">{stats.sequencias?.media_sequencias}</div>
             <div className="sub">Max: {stats.sequencias?.max_sequencia_historica}</div>
           </div>
         </div>
       )}
 
-      {/* CLASSIFICAÇÃO TÉRMICA */}
       {classificacao && (
         <div className="card" style={{ marginBottom: '16px' }}>
-          <h2>🔥 Classificação Térmica</h2>
+          <h2>Classificacao Termica</h2>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             <div>
               <strong style={{ fontSize: '13px', color: 'var(--quente)' }}>Quentes:</strong>
@@ -210,30 +205,20 @@ export default function App() {
         </div>
       )}
 
-      {/* MAIN GRID: VOLANTE + PAINEL */}
       <div className="main-grid">
-        {/* VOLANTE */}
         <div className="card">
           <h2>Volante Interativo</h2>
           <div className="mode-toggle">
-            <button
-              className={`mode-btn ${mode === 'incluir' ? 'active' : ''}`}
-              onClick={() => setMode('incluir')}
-            >
-              ✅ Incluir ({incluir.length})
+            <button className={`mode-btn ${mode === 'incluir' ? 'active' : ''}`} onClick={() => setMode('incluir')}>
+              Incluir ({incluir.length})
             </button>
-            <button
-              className={`mode-btn ${mode === 'excluir' ? 'active' : ''}`}
-              onClick={() => setMode('excluir')}
-            >
-              ❌ Excluir ({excluir.length})
+            <button className={`mode-btn ${mode === 'excluir' ? 'active' : ''}`} onClick={() => setMode('excluir')}>
+              Excluir ({excluir.length})
             </button>
           </div>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
             Modo atual: <strong style={{ color: 'var(--accent)' }}>{mode === 'incluir' ? 'Incluir' : 'Excluir'}</strong>
-            <InfoIcon text={mode === 'incluir'
-              ? 'Dezenas marcadas como Incluir devem aparecer obrigatoriamente em todos os jogos gerados. Uma dezena não pode estar simultaneamente em Incluir e Excluir.'
-              : 'Dezenas marcadas como Excluir não devem aparecer em nenhum jogo gerado. Uma dezena não pode estar simultaneamente em Incluir e Excluir.'} />
+            <InfoIcon text={mode === 'incluir' ? 'Dezenas marcadas como Incluir devem aparecer obrigatoriamente em todos os jogos gerados. Uma dezena nao pode estar simultaneamente em Incluir e Excluir.' : 'Dezenas marcadas como Excluir nao devem aparecer em nenhum jogo gerado. Uma dezena nao pode estar simultaneamente em Incluir e Excluir.'} />
           </div>
           <div className="volante-grid">
             {Array.from({ length: 25 }, (_, i) => i + 1).map(num => {
@@ -274,78 +259,47 @@ export default function App() {
               }
             </div>
           </div>
-          <button
-            className="btn btn-secondary btn-sm"
-            style={{ marginTop: '12px', width: '100%' }}
-            onClick={limparSelecao}
-          >
-            🧹 Limpar Seleção
+          <button className="btn btn-secondary btn-sm" style={{ marginTop: '12px', width: '100%' }} onClick={limparSelecao}>
+            Limpar Selecao
           </button>
         </div>
 
-        {/* PAINEL DE CONTROLE */}
         <div className="card">
           <h2>Painel de Controle</h2>
           <div className="form-group">
-            <label>Estratégia <InfoIcon text="Define como o sistema pondera a seleção de dezenas. Mista combina frequência e atraso. Quentes prioriza as mais sorteadas. Frios prioriza as mais atrasadas. Equilibrada busca dezenas próximas à média histórica." /></label>
+            <label>Estrategia <InfoIcon text="Define como o sistema pondera a selecao de dezenas. Mista combina frequencia e atraso. Quentes prioriza as mais sorteadas. Frios prioriza as mais atrasadas. Equilibrada busca dezenas proximas a media historica." /></label>
             <select value={estrategia} onChange={e => setEstrategia(e.target.value)}>
-              <option value="mista">🔀 Mista (Freq + Atraso)</option>
-              <option value="quentes">🔥 Quentes (Mais sorteadas)</option>
-              <option value="frios">❄️ Frios (Mais atrasadas)</option>
-              <option value="equilibrada">⚖️ Equilibrada (Próximas da média)</option>
+              <option value="mista">Mista (Freq + Atraso)</option>
+              <option value="quentes">Quentes (Mais sorteadas)</option>
+              <option value="frios">Frios (Mais atrasadas)</option>
+              <option value="equilibrada">Equilibrada (Proximas da media)</option>
             </select>
           </div>
           <div className="form-group">
-            <label>Dezenas por jogo: <strong style={{ color: 'var(--accent)' }}>{dezenas}</strong> <InfoIcon text="Quantidade de dezenas em cada jogo gerado. Na Lotofácil, o volante aceita de 15 a 20 dezenas por aposta." /></label>
-            <input
-              type="range"
-              min="15"
-              max="20"
-              value={dezenas}
-              onChange={e => setDezenas(parseInt(e.target.value, 10))}
-            />
+            <label>Dezenas por jogo: <strong style={{ color: 'var(--accent)' }}>{dezenas}</strong> <InfoIcon text="Quantidade de dezenas em cada jogo gerado. Na Lotofacil, o volante aceita de 15 a 20 dezenas por aposta." /></label>
+            <input type="range" min="15" max="20" value={dezenas} onChange={e => setDezenas(parseInt(e.target.value, 10))} />
           </div>
           <div className="form-group">
-            <label>Quantidade de jogos: <strong style={{ color: 'var(--accent)' }}>{quantidade}</strong> <InfoIcon text="Número de combinações a serem geradas no lote atual. Aceita de 1 a 300 jogos por geração." /></label>
-            <input
-              type="range"
-              min="1"
-              max="300"
-              value={quantidade}
-              onChange={e => setQuantidade(parseInt(e.target.value, 10))}
-            />
+            <label>Quantidade de jogos: <strong style={{ color: 'var(--accent)' }}>{quantidade}</strong> <InfoIcon text="Numero de combinacoes a serem geradas no lote atual. Aceita de 1 a 300 jogos por geracao." /></label>
+            <input type="range" min="1" max="300" value={quantidade} onChange={e => setQuantidade(parseInt(e.target.value, 10))} />
           </div>
           <div className="form-group">
-            <label>Janela de análise: <strong style={{ color: 'var(--accent)' }}>{janela}</strong> concursos <InfoIcon text="Número de concursos recentes usados para calcular as estatísticas. Janelas menores capturam tendências recentes; maiores suavizam anomalias. Aceita de 5 a 50 concursos." /></label>
-            <input
-              type="range"
-              min="5"
-              max="50"
-              value={janela}
-              onChange={e => setJanela(parseInt(e.target.value, 10))}
-            />
+            <label>Janela de analise: <strong style={{ color: 'var(--accent)' }}>{janela}</strong> concursos <InfoIcon text="Numero de concursos recentes usados para calcular as estatisticas. Janelas menores capturam tendencias recentes; maiores suavizam anomalias. Aceita de 5 a 50 concursos." /></label>
+            <input type="range" min="5" max="50" value={janela} onChange={e => setJanela(parseInt(e.target.value, 10))} />
           </div>
-          <button
-            className="btn btn-primary"
-            style={{ width: '100%', marginTop: '8px' }}
-            onClick={gerarJogos}
-            disabled={loadingJogos}
-          >
-            {loadingJogos ? '⏳ Gerando...' : '🎲 Gerar Jogos'}
+          <button className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }} onClick={gerarJogos} disabled={loadingJogos}>
+            {loadingJogos ? 'Gerando...' : 'Gerar Jogos'}
           </button>
         </div>
       </div>
 
-      {/* ÚLTIMOS SORTEIOS */}
       {stats?.ultimos_sorteios && (
         <div className="card" style={{ marginTop: '16px' }}>
-          <h2>📋 Últimos Sorteios</h2>
+          <h2>Ultimos Sorteios</h2>
           {stats.ultimos_sorteios.map(s => (
             <div key={s.concurso} style={{ marginBottom: '10px' }}>
               <strong style={{ fontSize: '13px' }}>Concurso {s.concurso}</strong>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>
-                {s.data_sorteio}
-              </span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>{s.data_sorteio}</span>
               <div className="ultimos-row">
                 {s.dezenas.map((d, i) => (
                   <span key={i} className="ultimo-badge">{pad(d)}</span>
@@ -356,17 +310,11 @@ export default function App() {
         </div>
       )}
 
-      {/* JOGOS GERADOS */}
       {jogos.length > 0 && (
         <div className="card jogos-section">
           <div className="jogos-header">
-            <h2>✅ {jogos.length} Jogo(s) Gerado(s)</h2>
-            <button
-              className="btn btn-success btn-sm"
-              onClick={() => exportarTxt(jogos, dezenas)}
-            >
-              💾 Exportar .txt
-            </button>
+            <h2>{jogos.length} Jogo(s) Gerado(s)</h2>
+            <button className="btn btn-success btn-sm" onClick={() => exportarTxt(jogos, dezenas)}>Exportar .txt</button>
           </div>
           <div className="jogos-grid">
             {jogos.map(jogo => (
@@ -375,9 +323,7 @@ export default function App() {
                 {jogo.dezenas.map((d, i) => (
                   <span key={i} className="dezena-ball">{pad(d)}</span>
                 ))}
-                <span className="jogo-info">
-                  Σ{jogo.soma} | {jogo.pares}p {jogo.impares}i
-                </span>
+                <span className="jogo-info">S{jogo.soma} | {jogo.pares}p {jogo.impares}i</span>
               </div>
             ))}
           </div>
