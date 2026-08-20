@@ -29,9 +29,7 @@ function exportarTxt(jogos, dezenas) {
 
 function InfoIcon({ text }) {
   return (
-    <span className="info-icon">i
-      <span className="info-tooltip">{text}</span>
-    </span>
+    <span className="info-icon">ⓘ<span className="info-tooltip">{text}</span></span>
   )
 }
 
@@ -204,3 +202,187 @@ export default function App() {
               <strong style={{ fontSize: '13px', color: 'var(--frio)' }}>Frios:</strong>
               <div className="thermal-row">
                 {classificacao.frios.map(n => (
+                  <span key={n} className="badge badge-frio">{pad(n)}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MAIN GRID: VOLANTE + PAINEL */}
+      <div className="main-grid">
+        {/* VOLANTE */}
+        <div className="card">
+          <h2>Volante Interativo</h2>
+          <div className="mode-toggle">
+            <button
+              className={`mode-btn ${mode === 'incluir' ? 'active' : ''}`}
+              onClick={() => setMode('incluir')}
+            >
+              ✅ Incluir ({incluir.length})
+            </button>
+            <button
+              className={`mode-btn ${mode === 'excluir' ? 'active' : ''}`}
+              onClick={() => setMode('excluir')}
+            >
+              ❌ Excluir ({excluir.length})
+            </button>
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+            Modo atual: <strong style={{ color: 'var(--accent)' }}>{mode === 'incluir' ? 'Incluir' : 'Excluir'}</strong>
+            <InfoIcon text={mode === 'incluir'
+              ? 'Dezenas marcadas como Incluir devem aparecer obrigatoriamente em todos os jogos gerados. Uma dezena não pode estar simultaneamente em Incluir e Excluir.'
+              : 'Dezenas marcadas como Excluir não devem aparecer em nenhum jogo gerado. Uma dezena não pode estar simultaneamente em Incluir e Excluir.'} />
+          </div>
+          <div className="volante-grid">
+            {Array.from({ length: 25 }, (_, i) => i + 1).map(num => {
+              const isIncluir = incluir.includes(num)
+              const isExcluir = excluir.includes(num)
+              const thermal = getThermalClass(classificacao, num)
+              const freq = frequencia?.[num]?.frequencia
+              const pct = frequencia?.[num]?.percentual
+              return (
+                <button
+                  key={num}
+                  className={`volante-cell ${thermal} ${isIncluir ? 'cell-incluir' : ''} ${isExcluir ? 'cell-excluir' : ''}`}
+                  onClick={() => handleVolanteClick(num)}
+                  title={`Freq: ${freq || '?'} (${pct || '?'}%)`}
+                >
+                  {pad(num)}
+                </button>
+              )
+            })}
+          </div>
+          <div style={{ marginTop: '12px' }}>
+            <strong style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Incluir:</strong>
+            <div className="tag-row">
+              {incluir.length === 0
+                ? <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Nenhuma</span>
+                : incluir.sort((a, b) => a - b).map(n => (
+                    <span key={n} className="tag tag-incluir">{pad(n)}</span>
+                  ))
+              }
+            </div>
+            <strong style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px', display: 'block' }}>Excluir:</strong>
+            <div className="tag-row">
+              {excluir.length === 0
+                ? <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Nenhuma</span>
+                : excluir.sort((a, b) => a - b).map(n => (
+                    <span key={n} className="tag tag-excluir">{pad(n)}</span>
+                  ))
+              }
+            </div>
+          </div>
+          <button
+            className="btn btn-secondary btn-sm"
+            style={{ marginTop: '12px', width: '100%' }}
+            onClick={limparSelecao}
+          >
+            🧹 Limpar Seleção
+          </button>
+        </div>
+
+        {/* PAINEL DE CONTROLE */}
+        <div className="card">
+          <h2>Painel de Controle</h2>
+          <div className="form-group">
+            <label>Estratégia <InfoIcon text="Define como o sistema pondera a seleção de dezenas. Mista combina frequência e atraso. Quentes prioriza as mais sorteadas. Frios prioriza as mais atrasadas. Equilibrada busca dezenas próximas à média histórica." /></label>
+            <select value={estrategia} onChange={e => setEstrategia(e.target.value)}>
+              <option value="mista">🔀 Mista (Freq + Atraso)</option>
+              <option value="quentes">🔥 Quentes (Mais sorteadas)</option>
+              <option value="frios">❄️ Frios (Mais atrasadas)</option>
+              <option value="equilibrada">⚖️ Equilibrada (Próximas da média)</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Dezenas por jogo: <strong style={{ color: 'var(--accent)' }}>{dezenas}</strong> <InfoIcon text="Quantidade de dezenas em cada jogo gerado. Na Lotofácil, o volante aceita de 15 a 20 dezenas por aposta." /></label>
+            <input
+              type="range"
+              min="15"
+              max="20"
+              value={dezenas}
+              onChange={e => setDezenas(parseInt(e.target.value, 10))}
+            />
+          </div>
+          <div className="form-group">
+            <label>Quantidade de jogos: <strong style={{ color: 'var(--accent)' }}>{quantidade}</strong> <InfoIcon text="Número de combinações a serem geradas no lote atual. Aceita de 1 a 300 jogos por geração." /></label>
+            <input
+              type="range"
+              min="1"
+              max="300"
+              value={quantidade}
+              onChange={e => setQuantidade(parseInt(e.target.value, 10))}
+            />
+          </div>
+          <div className="form-group">
+            <label>Janela de análise: <strong style={{ color: 'var(--accent)' }}>{janela}</strong> concursos <InfoIcon text="Número de concursos recentes usados para calcular as estatísticas. Janelas menores capturam tendências recentes; maiores suavizam anomalias. Aceita de 5 a 50 concursos." /></label>
+            <input
+              type="range"
+              min="5"
+              max="50"
+              value={janela}
+              onChange={e => setJanela(parseInt(e.target.value, 10))}
+            />
+          </div>
+          <button
+            className="btn btn-primary"
+            style={{ width: '100%', marginTop: '8px' }}
+            onClick={gerarJogos}
+            disabled={loadingJogos}
+          >
+            {loadingJogos ? '⏳ Gerando...' : '🎲 Gerar Jogos'}
+          </button>
+        </div>
+      </div>
+
+      {/* ÚLTIMOS SORTEIOS */}
+      {stats?.ultimos_sorteios && (
+        <div className="card" style={{ marginTop: '16px' }}>
+          <h2>📋 Últimos Sorteios</h2>
+          {stats.ultimos_sorteios.map(s => (
+            <div key={s.concurso} style={{ marginBottom: '10px' }}>
+              <strong style={{ fontSize: '13px' }}>Concurso {s.concurso}</strong>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>
+                {s.data_sorteio}
+              </span>
+              <div className="ultimos-row">
+                {s.dezenas.map((d, i) => (
+                  <span key={i} className="ultimo-badge">{pad(d)}</span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* JOGOS GERADOS */}
+      {jogos.length > 0 && (
+        <div className="card jogos-section">
+          <div className="jogos-header">
+            <h2>✅ {jogos.length} Jogo(s) Gerado(s)</h2>
+            <button
+              className="btn btn-success btn-sm"
+              onClick={() => exportarTxt(jogos, dezenas)}
+            >
+              💾 Exportar .txt
+            </button>
+          </div>
+          <div className="jogos-grid">
+            {jogos.map(jogo => (
+              <div key={jogo.id} className="jogo-item">
+                <span className="jogo-num">#{jogo.id}</span>
+                {jogo.dezenas.map((d, i) => (
+                  <span key={i} className="dezena-ball">{pad(d)}</span>
+                ))}
+                <span className="jogo-info">
+                  Σ{jogo.soma} | {jogo.pares}p {jogo.impares}i
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
