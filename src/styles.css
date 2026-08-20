@@ -17,13 +17,13 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif; min-height: 100vh; line-height: 1.5; }
 .app { max-width: 1200px; margin: 0 auto; padding: 16px; }
-/* Header - agora contem o badge alinhado */
+/* Header - 3 elementos: titulo | badge | botoes */
 .header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px 0; border-bottom: 2px solid var(--accent); margin-bottom: 20px; }
-.header-left { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.header-left { display: flex; flex-direction: column; gap: 2px; }
 .header h1 { font-size: 28px; font-weight: 800; color: var(--accent); }
 .header p { color: var(--text-muted); font-size: 14px; }
 .header-actions { display: flex; gap: 8px; align-items: center; }
-/* Lottery badge - dentro do header, alinhado com o titulo */
+/* Lottery badge - centralizado no header */
 .lottery-badge { display: inline-flex; align-items: center; gap: 8px; padding: 10px 36px; border-radius: 16px; background: rgba(168,85,247,0.15); border: 1px solid var(--accent); color: var(--accent); font-size: 36px; font-weight: 800; white-space: nowrap; letter-spacing: 0.06em; box-shadow: 0 2px 16px rgba(168,85,247,0.2); }
 /* Buttons */
 .btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
