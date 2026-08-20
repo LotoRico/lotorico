@@ -69,9 +69,11 @@ function exportarPDF(jogos, dezenas, estrategia, janela) {
   const estratExp = getStrategyExplanation(estrategia)
   const dezenasMini = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#a855f7;color:#170d26;font-size:8px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
   const jogosHtml = jogos.map((j, idx) => {
-    const breakClass = idx > 0 && idx % 20 === 0 ? ' page-break' : ''
+    let pageBreak = ''
+    if (idx === 20) { pageBreak = ' page-break' }
+    else if (idx > 20 && (idx - 20) % 30 === 0) { pageBreak = ' page-break' }
     return `
-    <div class="jogo-row${breakClass}">
+    <div class="jogo-row${pageBreak}">
       <span class="jogo-id">#${j.id}</span>
       <span class="dezenas-block">${dezenasMini(j.dezenas)}</span>
       <span class="jogo-stats">Soma: <strong>${j.soma}</strong> &nbsp;|&nbsp; Pares: <strong>${j.pares}</strong> &nbsp;|&nbsp; Impares: <strong>${j.impares}</strong></span>
