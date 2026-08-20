@@ -16,6 +16,20 @@ function getThermalClass(c, num) {
 
 function pad(n) { return String(n).padStart(2, '0') }
 
+function getStrategyName(estrategia) {
+  return { mista: 'Mista (Freq + Atraso)', quentes: 'Quentes', frios: 'Frios', equilibrada: 'Equilibrada' }[estrategia] || estrategia
+}
+
+function getStrategyExplanation(estrategia) {
+  const explanations = {
+    mista: 'Combina a frequencia de sorteio com o tempo de atraso de cada dezena. Dezenas com boa frequencia e atraso medio recebem maior peso na amostragem. Ideal para quem busca equilibrio entre as tendencias recentes e o comportamento historico.',
+    quentes: 'Prioriza as dezenas mais sorteadas na janela analisada. O algoritmo atribui maior peso as dezenas com maior frequencia de aparecimento. Recomendado quando ha padrao de repeticao de dezenas em alta no periodo recente.',
+    frios: 'Prioriza as dezenas mais atrasadas, ou seja, aquelas que ha mais tempo sem aparecer nos sorteios. Baseado na lei dos grandes numeros, onde dezenas com atraso prolongado tendem a retornar. Recomendado para quem busca reversao a media.',
+    equilibrada: 'Seleciona dezenas proximas a media historica de frequencia, evitando extremos. Nem as mais quentes, nem as mais frias. Recomendado para apostas conservadoras que buscam distribuicao equilibrada.'
+  }
+  return explanations[estrategia] || ''
+}
+
 function exportarTxt(jogos, dezenas) {
   const linhas = jogos.map(j => j.dezenas.map(pad).join(' '))
   const blob = new Blob([linhas.join('\n')], { type: 'text/plain' })
@@ -30,9 +44,46 @@ function exportarTxt(jogos, dezenas) {
 function exportarXLSX(jogos, dezenas, estrategia, janela) {
   const data = new Date().toLocaleDateString('pt-BR')
   const hora = new Date().toLocaleTimeString('pt-BR')
-  const estrat = { mista: 'Mista', quentes: 'Quentes', frios: 'Frios', equilibrada: 'Equilibrada' }[estrategia] || estrategia
-  const html = `<table border="1"><tr><th colspan="5" style="background:#a855f7;color:#170d26;font-size:14px;padding:10px;">Loto Rico - Inteligencia Estatistica para Loterias</th></tr><tr><td colspan="5" style="padding:8px;background:#241535;">Lotofacil | ${data} ${hora} | Estrategia: ${estrat} | Janela: ${janela} | ${dezenas} dezenas | ${jogos.length} jogo(s)</td></tr><tr style="background:#332049;"><th>Jogo</th><th>Dezenas</th><th>Soma</th><th>Pares</th><th>Impares</th></tr>${jogos.map(j => `<tr><td>#${j.id}</td><td>${j.dezenas.map(pad).join(' - ')}</td><td>${j.soma}</td><td>${j.pares}</td><td>${j.impares}</td></tr>`).join('')}<tr><td colspan="5" style="padding:8px;font-size:11px;color:#b794d4;">Usuario: [Assinante] | Gerado por Loto Rico</td></tr></table>`
-  const blob = new Blob([html], { type: 'application/vnd.ms-excel' })
+  const estrat = getStrategyName(estrategia)
+  const estratExp = getStrategyExplanation(estrategia)
+  const totalCols = dezenas + 4
+  const mergeAcross = totalCols - 1
+  let dezenaHeaders = ''
+  for (let i = 1; i <= dezenas; i++) { dezenaHeaders += `<Cell ss:StyleID="ColHeader"><Data ss:Type="String">D${pad(i)}</Data></Cell>` }
+  let rowsXml = ''
+  jogos.forEach(j => {
+    let cellsXml = `<Cell ss:StyleID="JogoNum"><Data ss:Type="String">#${j.id}</Data></Cell>`
+    j.dezenas.forEach(d => { cellsXml += `<Cell ss:StyleID="Dezena"><Data ss:Type="Number">${d}</Data></Cell>` })
+    cellsXml += `<Cell ss:StyleID="Info"><Data ss:Type="Number">${j.soma}</Data></Cell>`
+    cellsXml += `<Cell ss:StyleID="Info"><Data ss:Type="Number">${j.pares}</Data></Cell>`
+    cellsXml += `<Cell ss:StyleID="Info"><Data ss:Type="Number">${j.impares}</Data></Cell>`
+    rowsXml += `<Row>${cellsXml}</Row>`
+  })
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">
+<Styles>
+<Style ss:ID="Header"><Font ss:FontName="Calibri" ss:Size="14" ss:Bold="1" ss:Color="#170D26"/><Interior ss:Color="#A855F7" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+<Style ss:ID="SubHeader"><Font ss:FontName="Calibri" ss:Size="11" ss:Color="#E9D5FF"/><Interior ss:Color="#241535" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>
+<Style ss:ID="StrategyInfo"><Font ss:FontName="Calibri" ss:Size="10" ss:Color="#B794D4" ss:Italic="1"/><Interior ss:Color="#241535" ss:Pattern="Solid"/><Alignment ss:Vertical="Top" ss:WrapText="1"/></Style>
+<Style ss:ID="ColHeader"><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#E9D5FF"/><Interior ss:Color="#332049" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/></Borders></Style>
+<Style ss:ID="Dezena"><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#170D26"/><Interior ss:Color="#A855F7" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/></Borders></Style>
+<Style ss:ID="JogoNum"><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#B794D4"/><Interior ss:Color="#241535" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/></Borders></Style>
+<Style ss:ID="Info"><Font ss:FontName="Calibri" ss:Size="11" ss:Color="#B794D4"/><Interior ss:Color="#241535" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#3D2854"/></Borders></Style>
+<Style ss:ID="Footer"><Font ss:FontName="Calibri" ss:Size="9" ss:Color="#B794D4"/><Interior ss:Color="#241535" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>
+</Styles>
+<Worksheet ss:Name="Loto Rico">
+<Table>
+<Row ss:Height="30"><Cell ss:MergeAcross="${mergeAcross}" ss:StyleID="Header"><Data ss:Type="String">Loto Rico - Inteligencia Estatistica para Loterias</Data></Cell></Row>
+<Row><Cell ss:MergeAcross="${mergeAcross}" ss:StyleID="SubHeader"><Data ss:Type="String">Lotofacil | ${data} ${hora} | Estrategia: ${estrat} | Janela: ${janela} concursos | ${dezenas} dezenas | ${jogos.length} jogo(s)</Data></Cell></Row>
+<Row ss:Height="60"><Cell ss:MergeAcross="${mergeAcross}" ss:StyleID="StrategyInfo"><Data ss:Type="String">${estratExp}</Data></Cell></Row>
+<Row><Cell ss:StyleID="ColHeader"><Data ss:Type="String">Jogo</Data></Cell>${dezenaHeaders}<Cell ss:StyleID="ColHeader"><Data ss:Type="String">Soma</Data></Cell><Cell ss:StyleID="ColHeader"><Data ss:Type="String">Pares</Data></Cell><Cell ss:StyleID="ColHeader"><Data ss:Type="String">Impares</Data></Cell></Row>
+${rowsXml}
+<Row><Cell ss:MergeAcross="${mergeAcross}" ss:StyleID="Footer"><Data ss:Type="String">Usuario: [Assinante] | Gerado por Loto Rico</Data></Cell></Row>
+</Table>
+</Worksheet>
+</Workbook>`
+  const blob = new Blob([xml], { type: 'application/vnd.ms-excel' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -44,9 +95,10 @@ function exportarXLSX(jogos, dezenas, estrategia, janela) {
 function exportarPDF(jogos, dezenas, estrategia, janela) {
   const data = new Date().toLocaleDateString('pt-BR')
   const hora = new Date().toLocaleTimeString('pt-BR')
-  const estrat = { mista: 'Mista', quentes: 'Quentes', frios: 'Frios', equilibrada: 'Equilibrada' }[estrategia] || estrategia
+  const estrat = getStrategyName(estrategia)
+  const estratExp = getStrategyExplanation(estrategia)
   const win = window.open('', '_blank')
-  win.document.write(`<html><head><title>Loto Rico - Jogos</title><style>body{font-family:Inter,sans-serif;background:#170d26;color:#e9d5ff;padding:40px;margin:0}h1{color:#a855f7;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#b794d4;font-size:14px;margin-bottom:20px}.info{text-align:center;color:#b794d4;font-size:13px;margin-bottom:24px}table{width:100%;border-collapse:collapse}th{background:#a855f7;color:#170d26;padding:10px;font-size:13px}td{padding:8px;border:1px solid #3d2854;font-size:13px}tr:nth-child(even){background:#241535}.footer{margin-top:30px;text-align:center;font-size:11px;color:#b794d4}</style></head><body><h1>Loto Rico</h1><div class="sub">Inteligencia Estatistica para Loterias</div><div class="info">Lotofacil | ${data} ${hora}<br>Estrategia: ${estrat} | Janela: ${janela} | ${dezenas} dezenas | ${jogos.length} jogo(s)</div><table><tr><th>Jogo</th><th>Dezenas</th><th>Soma</th><th>Pares</th><th>Impares</th></tr>${jogos.map(j => `<tr><td>#${j.id}</td><td>${j.dezenas.map(pad).join(' - ')}</td><td>${j.soma}</td><td>${j.pares}</td><td>${j.impares}</td></tr>`).join('')}</table><div class="footer">Usuario: [Assinante] | Gerado por Loto Rico</div></body></html>`)
+  win.document.write(`<html><head><title>Loto Rico - Jogos</title><style>body{font-family:Inter,Calibri,sans-serif;background:#170d26;color:#e9d5ff;padding:40px;margin:0}h1{color:#a855f7;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#b794d4;font-size:14px;margin-bottom:20px}.info{text-align:center;color:#b794d4;font-size:13px;margin-bottom:16px}.strategy-box{background:#241535;border:1px solid #3d2854;border-radius:8px;padding:16px;margin-bottom:24px}.strategy-title{color:#a855f7;font-weight:700;font-size:13px;margin-bottom:6px}.strategy-text{color:#b794d4;font-size:12px;line-height:1.5}table{width:100%;border-collapse:collapse}th{background:#a855f7;color:#170d26;padding:10px;font-size:13px}td{padding:8px;border:1px solid #3d2854;font-size:13px;text-align:center}tr:nth-child(even){background:#241535}.footer{margin-top:30px;text-align:center;font-size:11px;color:#b794d4}</style></head><body><h1>Loto Rico</h1><div class="sub">Inteligencia Estatistica para Loterias</div><div class="info">Lotofacil | ${data} ${hora}<br>Estrategia: ${estrat} | Janela: ${janela} concursos | ${dezenas} dezenas | ${jogos.length} jogo(s)</div><div class="strategy-box"><div class="strategy-title">Resumo da Estrategia: ${estrat}</div><div class="strategy-text">${estratExp}</div></div><table><tr><th>Jogo</th>${Array.from({length:dezenas},(_,i)=>`<th>D${pad(i+1)}</th>`).join('')}<th>Soma</th><th>Pares</th><th>Impares</th></tr>${jogos.map(j=>`<tr><td>#${j.id}</td>${j.dezenas.map(d=>`<td>${pad(d)}</td>`).join('')}<td>${j.soma}</td><td>${j.pares}</td><td>${j.impares}</td></tr>`).join('')}</table><div class="footer">Usuario: [Assinante] | Gerado por Loto Rico</div></body></html>`)
   win.document.close()
   setTimeout(() => { win.print() }, 500)
 }
@@ -76,9 +128,7 @@ export default function App() {
     try {
       const r = await fetchAPI(`estatisticas?janela=${janela}`)
       if (r.sucesso) setStats(r.dados)
-    } catch (e) {
-      setErro('Erro ao carregar estatisticas')
-    }
+    } catch (e) { setErro('Erro ao carregar estatisticas') }
     setLoadingStats(false)
   }
 
@@ -284,12 +334,12 @@ export default function App() {
           <div className="jogos-header">
             <h2>{jogos.length} Jogo(s) Gerado(s)</h2>
             <div className="export-buttons">
-              <button className="btn btn-success btn-sm" onClick={() => exportarTxt(jogos, dezenas)} title="Formato para a extensão Loto Rico - upload automático no site da Caixa">TXT</button>
+              <button className="btn btn-success btn-sm" onClick={() => exportarTxt(jogos, dezenas)} title="Formato da extensão Loto Rico para Chrome - permite o upload dos jogos no site da Caixa">TXT</button>
               <button className="btn btn-secondary btn-sm" onClick={() => exportarPDF(jogos, dezenas, estrategia, janela)}>PDF</button>
               <button className="btn btn-secondary btn-sm" onClick={() => exportarXLSX(jogos, dezenas, estrategia, janela)}>XLSX</button>
             </div>
           </div>
-          <div className="export-note">TXT: formato para a extensão Loto Rico (upload automático no site da Caixa) | PDF e XLSX: documentos com informações completas</div>
+          <div className="export-note">TXT: formato da extensão Loto Rico para Chrome - permite o upload dos jogos no site da Caixa | PDF e XLSX: documentos com informações completas</div>
           <div className="jogos-grid">
             {jogos.map(jogo => (
               <div key={jogo.id} className="jogo-item">
