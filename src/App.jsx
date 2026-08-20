@@ -370,4 +370,95 @@ export default function App() {
               const freq = frequencia?.[num]?.frequencia
               const pct = frequencia?.[num]?.percentual
               return (
-                <button key={num} className={`volante-cell 
+                <button key={num} className={`volante-cell ${thermal} ${isIncluir ? 'cell-incluir' : ''} ${isExcluir ? 'cell-excluir' : ''}`} onClick={() => handleVolanteClick(num)} title={`Freq: ${freq || '?'} (${pct || '?'}%)`}>{pad(num)}</button>
+              )
+            })}
+          </div>
+          <div style={{ marginTop: '12px' }}>
+            <strong style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Incluir:</strong>
+            <div className="tag-row">
+              {incluir.length === 0 ? <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Nenhuma</span> : incluir.sort((a, b) => a - b).map(n => (<span key={n} className="tag tag-incluir">{pad(n)}</span>))}
+            </div>
+            <strong style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px', display: 'block' }}>Excluir:</strong>
+            <div className="tag-row">
+              {excluir.length === 0 ? <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Nenhuma</span> : excluir.sort((a, b) => a - b).map(n => (<span key={n} className="tag tag-excluir">{pad(n)}</span>))}
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <h2>Painel de Controle</h2>
+          <div className="form-group">
+            <label>Estratégia <InfoIcon>
+              <strong>Mista (Freq + Atraso)</strong>: Combina frequencia de sorteio com tempo de atraso. Dezenas com boa frequencia e atraso medio recebem maior peso. Ideal para quem busca equilibrio entre tendencias.<br/><br/>
+              <strong>Quentes</strong>: Prioriza as dezenas mais sorteadas na janela analisada. Aproveita a tendencia de continuidade de dezenas em alta. Recomendado quando ha padrao de repeticao recente.<br/><br/>
+              <strong>Frios</strong>: Prioriza as dezenas mais atrasadas (ha mais tempo sem aparecer). Baseado na lei dos grandes numeros, onde dezenas muito atrasadas tendem a retornar. Recomendado para quem busca retorno a media.<br/><br/>
+              <strong>Equilibrada</strong>: Seleciona dezenas proximas a media historica de frequencia. Evita extremos (nem muito quentes, nem muito frias). Recomendado para apostas conservadoras.
+            </InfoIcon></label>
+            <select value={estrategia} onChange={e => setEstrategia(e.target.value)}>
+              <option value="mista">Mista (Freq + Atraso)</option>
+              <option value="quentes">Quentes (Mais sorteadas)</option>
+              <option value="frios">Frios (Mais atrasadas)</option>
+              <option value="equilibrada">Equilibrada (Próximas da média)</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Dezenas por jogo: <strong style={{ color: 'var(--accent)' }}>{dezenas}</strong> <InfoIcon>Quantidade de dezenas em cada jogo gerado. Na Lotofácil, o volante aceita de <strong>15 a 20 dezenas</strong> por aposta. Alterar este valor recalcula os limites de inclusões e exclusões automaticamente.</InfoIcon></label>
+            <input type="range" min="15" max="20" value={dezenas} onChange={e => setDezenas(parseInt(e.target.value, 10))} />
+          </div>
+          <div className="form-group">
+            <label>Quantidade de jogos: <strong style={{ color: 'var(--accent)' }}>{quantidade}</strong> <InfoIcon>Número de combinações a serem geradas no lote atual. Aceita de <strong>1 a 300 jogos</strong> por geração.</InfoIcon></label>
+            <input type="range" min="1" max="300" value={quantidade} onChange={e => setQuantidade(parseInt(e.target.value, 10))} />
+          </div>
+          <div className="form-group">
+            <label>Janela de análise: <strong style={{ color: 'var(--accent)' }}>{janela}</strong> concursos <InfoIcon>Número de concursos recentes usados para calcular as estatísticas. Janelas menores capturam tendências recentes; maiores suavizam anomalias. Aceita de <strong>5 a 50 concursos</strong>.</InfoIcon></label>
+            <input type="range" min="5" max="50" value={janela} onChange={e => setJanela(parseInt(e.target.value, 10))} />
+          </div>
+          <button className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }} onClick={gerarJogos} disabled={loadingJogos}>
+            {loadingJogos ? 'Gerando...' : 'Gerar Jogos'}
+          </button>
+        </div>
+      </div>
+
+      {stats?.ultimos_sorteios && (
+        <div className="card" style={{ marginTop: '16px' }}>
+          <h2>Últimos Sorteios</h2>
+          {stats.ultimos_sorteios.map(s => (
+            <div key={s.concurso} style={{ marginBottom: '10px' }}>
+              <strong style={{ fontSize: '13px' }}>Concurso {s.concurso}</strong>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>{s.data_sorteio}</span>
+              <div className="ultimos-row">
+                {s.dezenas.map((d, i) => (<span key={i} className="ultimo-badge">{pad(d)}</span>))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {jogos.length > 0 && (
+        <div className="card jogos-section">
+          <div className="jogos-header">
+            <h2>{jogos.length} Jogo(s) Gerado(s)</h2>
+            <div className="export-buttons">
+              <button className="btn btn-success btn-sm" onClick={() => exportarTxt(jogos, dezenas)}>TXT</button>
+              <InfoIcon><strong>TXT</strong>: Formato da extensao Loto Rico para Chrome. Permite o upload dos jogos no site da Caixa Economica Federal.</InfoIcon>
+              <button className="btn btn-secondary btn-sm" onClick={() => exportarPDF(jogos, dezenas, estrategia, janela, incluir, excluir)}>PDF</button>
+              <InfoIcon><strong>PDF</strong>: Documento formatado com todas as informacoes dos jogos, estrategia utilizada e resumo estatistico. Ideal para impressao e arquivo.</InfoIcon>
+              <button className="btn btn-secondary btn-sm" onClick={() => exportarCSV(jogos, dezenas, estrategia, janela)}>CSV</button>
+              <InfoIcon><strong>CSV</strong>: Planilha com uma dezena por celula, cabecalho com dados da estrategia e informacoes completas. Compativel com Excel e Google Sheets.</InfoIcon>
+            </div>
+          </div>
+          <div className="jogos-grid">
+            {jogos.map(jogo => (
+              <div key={jogo.id} className="jogo-item">
+                <span className="jogo-num">#{jogo.id}</span>
+                {jogo.dezenas.map((d, i) => (<span key={i} className="dezena-ball">{pad(d)}</span>))}
+                <span className="jogo-info">Soma: {jogo.soma} | Pares: {jogo.pares} | Ímpares: {jogo.impares}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
