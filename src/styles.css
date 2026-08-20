@@ -15,75 +15,19 @@
   --frio: #60a5fa;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  min-height: 100vh;
-  line-height: 1.5;
-}
-.app {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px;
-}
-/* Lottery badge container - centered top */
-.lottery-badge-container {
-  text-align: center;
-  margin-bottom: 4px;
-}
+body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif; min-height: 100vh; line-height: 1.5; }
+.app { max-width: 1200px; margin: 0 auto; padding: 16px; }
+/* Lottery badge container */
+.lottery-badge-container { text-align: center; margin-bottom: 4px; }
 /* Header */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 16px 0;
-  border-bottom: 2px solid var(--accent);
-  margin-bottom: 20px;
-}
-.header h1 {
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--accent);
-}
-.header p {
-  color: var(--text-muted);
-  font-size: 14px;
-}
-.header-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-/* Lottery badge */
-.lottery-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 16px;
-  border-radius: 12px;
-  background: rgba(168,85,247,0.18);
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-}
+.header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px 0; border-bottom: 2px solid var(--accent); margin-bottom: 20px; }
+.header h1 { font-size: 28px; font-weight: 800; color: var(--accent); }
+.header p { color: var(--text-muted); font-size: 14px; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+/* Lottery badge - bigger */
+.lottery-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 28px; border-radius: 16px; background: rgba(168,85,247,0.18); border: 1px solid var(--accent); color: var(--accent); font-size: 18px; font-weight: 700; white-space: nowrap; letter-spacing: 0.05em; }
 /* Buttons */
-.btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
+.btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-primary { background: var(--accent); color: var(--bg); }
 .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
@@ -93,19 +37,12 @@ body {
 .btn-success:hover:not(:disabled) { filter: brightness(0.9); }
 .btn-danger { background: var(--danger); color: white; }
 .btn-sm { padding: 6px 12px; font-size: 13px; }
+/* Export buttons */
+.export-buttons { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.export-note { font-size: 11px; color: var(--text-muted); margin-top: 4px; text-align: right; }
 /* Dashboard */
-.dashboard {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
-}
-.stat-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px;
-}
+.dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
 .stat-card .label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .stat-card .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
 .stat-card .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
@@ -142,19 +79,19 @@ body {
 /* Info icon + tooltip */
 .info-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: var(--card-hover); color: var(--text-muted); font-size: 11px; font-weight: 700; cursor: help; margin-left: 6px; position: relative; vertical-align: middle; user-select: none; }
 .info-icon:hover { background: var(--accent); color: var(--bg); }
-.info-tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #0a0410; border: 1px solid var(--accent); border-radius: 6px; padding: 8px 12px; font-size: 12px; font-weight: 400; color: var(--text); white-space: normal; width: 260px; z-index: 100; margin-bottom: 6px; line-height: 1.5; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+.info-tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #0a0410; border: 1px solid var(--accent); border-radius: 6px; padding: 10px 14px; font-size: 12px; font-weight: 400; color: var(--text); white-space: normal; width: 300px; z-index: 100; margin-bottom: 6px; line-height: 1.5; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
 .info-icon:hover .info-tooltip { display: block; }
 .info-tooltip strong { color: var(--accent); font-weight: 700; }
 .range-row { display: flex; justify-content: space-between; align-items: center; }
 .range-value { font-size: 18px; font-weight: 700; color: var(--accent); }
-/* Incluir/excluir tags */
+/* Tags */
 .tag-row { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; min-height: 24px; }
 .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 600; }
 .tag-incluir { background: rgba(34,197,94,0.2); color: var(--success); }
 .tag-excluir { background: rgba(239,68,68,0.2); color: var(--danger); }
-/* Jogos list */
+/* Jogos */
 .jogos-section { margin-top: 20px; }
-.jogos-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.jogos-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
 .jogos-grid { display: grid; gap: 8px; }
 .jogo-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); }
 .jogo-num { font-size: 13px; font-weight: 700; color: var(--text-muted); min-width: 36px; }
