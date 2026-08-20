@@ -97,30 +97,31 @@ function exportarPDF(jogos, dezenas, estrategia, janela, incArr, excArr) {
   win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Loto Rico - Jogos</title><style>
   @page{margin:0.5cm;}
   *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{height:auto;}
-  body{font-family:'Inter',Calibri,system-ui,sans-serif;background:#170d26;color:#e9d5ff;padding:16px;font-size:13px;}
-  .header{text-align:center;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #a855f7;}
+  html,body{height:auto;width:100%;}
+  body{font-family:'Inter',Calibri,system-ui,sans-serif;background:#170d26;color:#e9d5ff;padding:16px;font-size:13px;width:100%;}
+  .header{text-align:center;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #a855f7;width:100%;}
   .header h1{font-size:24px;font-weight:800;color:#a855f7;margin-bottom:2px;}
   .header .sub{color:#b794d4;font-size:13px;}
   .badge{display:inline-block;padding:4px 16px;border-radius:10px;background:rgba(168,85,247,0.18);border:1px solid #a855f7;color:#a855f7;font-size:15px;font-weight:800;margin-bottom:8px;}
-  .info-card{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+  .info-card{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;width:100%;}
   .info-item{text-align:center;}
   .info-item .label{font-size:10px;color:#b794d4;text-transform:uppercase;letter-spacing:0.05em;}
   .info-item .val{font-size:14px;font-weight:700;color:#a855f7;}
-  .selecao-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:4px;}
-  .strategy-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:14px;}
+  .selecao-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:4px;width:100%;}
+  .strategy-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:14px;width:100%;}
   .strategy-box .stitle{color:#a855f7;font-weight:700;font-size:13px;margin-bottom:4px;}
   .strategy-box .stext{color:#b794d4;font-size:11px;line-height:1.5;}
-  .jogo-title{font-size:14px;font-weight:700;color:#a855f7;margin-bottom:8px;}
-  .jogo-row{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:8px 10px;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
-  .jogo-id{font-size:12px;font-weight:700;color:#b794d4;min-width:28px;}
-  .dezenas-block{display:flex;flex-wrap:wrap;gap:2px;flex:0 1 auto;}
-  .jogo-stats{margin-left:auto;font-size:11px;color:#b794d4;white-space:nowrap;}
+  .jogo-title{font-size:14px;font-weight:700;color:#a855f7;margin-bottom:8px;width:100%;}
+  .jogo-row{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:8px 10px;margin-bottom:4px;display:flex;align-items:center;gap:8px;width:100%;}
+  .jogo-id{font-size:12px;font-weight:700;color:#b794d4;min-width:28px;flex-shrink:0;}
+  .dezenas-block{display:flex;flex-wrap:wrap;gap:2px;flex:1 1 auto;}
+  .jogo-stats{margin-left:auto;font-size:11px;color:#b794d4;white-space:nowrap;flex-shrink:0;}
   .jogo-stats strong{color:#a855f7;}
-  .footer{margin-top:10px;text-align:center;font-size:10px;color:#b794d4;padding-top:8px;border-top:1px solid #3d2854;}
+  .footer{margin-top:10px;text-align:center;font-size:10px;color:#b794d4;padding-top:8px;border-top:1px solid #3d2854;width:100%;}
   .page-break{page-break-before:always;}
   @media print{
-    body{padding:10px;font-size:14px;}
+    html,body{width:100%;margin:0;padding:0;}
+    body{padding:8px;font-size:14px;}
     .header{margin-bottom:12px;padding-bottom:10px;}
     .header h1{font-size:28px;}
     .header .sub{font-size:14px;}
@@ -133,7 +134,7 @@ function exportarPDF(jogos, dezenas, estrategia, janela, incArr, excArr) {
     .strategy-box .stitle{font-size:14px;}
     .strategy-box .stext{font-size:12px;line-height:1.6;}
     .jogo-title{font-size:16px;margin-bottom:10px;}
-    .jogo-row{padding:10px 12px;margin-bottom:5px;}
+    .jogo-row{padding:10px 12px;margin-bottom:5px;width:100%;}
     .jogo-id{font-size:13px;min-width:32px;}
     .jogo-stats{font-size:12px;}
     .footer{margin-top:8px;padding-top:6px;font-size:11px;}
@@ -369,95 +370,4 @@ export default function App() {
               const freq = frequencia?.[num]?.frequencia
               const pct = frequencia?.[num]?.percentual
               return (
-                <button key={num} className={`volante-cell ${thermal} ${isIncluir ? 'cell-incluir' : ''} ${isExcluir ? 'cell-excluir' : ''}`} onClick={() => handleVolanteClick(num)} title={`Freq: ${freq || '?'} (${pct || '?'}%)`}>{pad(num)}</button>
-              )
-            })}
-          </div>
-          <div style={{ marginTop: '12px' }}>
-            <strong style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Incluir:</strong>
-            <div className="tag-row">
-              {incluir.length === 0 ? <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Nenhuma</span> : incluir.sort((a, b) => a - b).map(n => (<span key={n} className="tag tag-incluir">{pad(n)}</span>))}
-            </div>
-            <strong style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px', display: 'block' }}>Excluir:</strong>
-            <div className="tag-row">
-              {excluir.length === 0 ? <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Nenhuma</span> : excluir.sort((a, b) => a - b).map(n => (<span key={n} className="tag tag-excluir">{pad(n)}</span>))}
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <h2>Painel de Controle</h2>
-          <div className="form-group">
-            <label>Estratégia <InfoIcon>
-              <strong>Mista (Freq + Atraso)</strong>: Combina frequencia de sorteio com tempo de atraso. Dezenas com boa frequencia e atraso medio recebem maior peso. Ideal para quem busca equilibrio entre tendencias.<br/><br/>
-              <strong>Quentes</strong>: Prioriza as dezenas mais sorteadas na janela analisada. Aproveita a tendencia de continuidade de dezenas em alta. Recomendado quando ha padrao de repeticao recente.<br/><br/>
-              <strong>Frios</strong>: Prioriza as dezenas mais atrasadas (ha mais tempo sem aparecer). Baseado na lei dos grandes numeros, onde dezenas muito atrasadas tendem a retornar. Recomendado para quem busca retorno a media.<br/><br/>
-              <strong>Equilibrada</strong>: Seleciona dezenas proximas a media historica de frequencia. Evita extremos (nem muito quentes, nem muito frias). Recomendado para apostas conservadoras.
-            </InfoIcon></label>
-            <select value={estrategia} onChange={e => setEstrategia(e.target.value)}>
-              <option value="mista">Mista (Freq + Atraso)</option>
-              <option value="quentes">Quentes (Mais sorteadas)</option>
-              <option value="frios">Frios (Mais atrasadas)</option>
-              <option value="equilibrada">Equilibrada (Próximas da média)</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Dezenas por jogo: <strong style={{ color: 'var(--accent)' }}>{dezenas}</strong> <InfoIcon>Quantidade de dezenas em cada jogo gerado. Na Lotofácil, o volante aceita de <strong>15 a 20 dezenas</strong> por aposta. Alterar este valor recalcula os limites de inclusões e exclusões automaticamente.</InfoIcon></label>
-            <input type="range" min="15" max="20" value={dezenas} onChange={e => setDezenas(parseInt(e.target.value, 10))} />
-          </div>
-          <div className="form-group">
-            <label>Quantidade de jogos: <strong style={{ color: 'var(--accent)' }}>{quantidade}</strong> <InfoIcon>Número de combinações a serem geradas no lote atual. Aceita de <strong>1 a 300 jogos</strong> por geração.</InfoIcon></label>
-            <input type="range" min="1" max="300" value={quantidade} onChange={e => setQuantidade(parseInt(e.target.value, 10))} />
-          </div>
-          <div className="form-group">
-            <label>Janela de análise: <strong style={{ color: 'var(--accent)' }}>{janela}</strong> concursos <InfoIcon>Número de concursos recentes usados para calcular as estatísticas. Janelas menores capturam tendências recentes; maiores suavizam anomalias. Aceita de <strong>5 a 50 concursos</strong>.</InfoIcon></label>
-            <input type="range" min="5" max="50" value={janela} onChange={e => setJanela(parseInt(e.target.value, 10))} />
-          </div>
-          <button className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }} onClick={gerarJogos} disabled={loadingJogos}>
-            {loadingJogos ? 'Gerando...' : 'Gerar Jogos'}
-          </button>
-        </div>
-      </div>
-
-      {stats?.ultimos_sorteios && (
-        <div className="card" style={{ marginTop: '16px' }}>
-          <h2>Últimos Sorteios</h2>
-          {stats.ultimos_sorteios.map(s => (
-            <div key={s.concurso} style={{ marginBottom: '10px' }}>
-              <strong style={{ fontSize: '13px' }}>Concurso {s.concurso}</strong>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>{s.data_sorteio}</span>
-              <div className="ultimos-row">
-                {s.dezenas.map((d, i) => (<span key={i} className="ultimo-badge">{pad(d)}</span>))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {jogos.length > 0 && (
-        <div className="card jogos-section">
-          <div className="jogos-header">
-            <h2>{jogos.length} Jogo(s) Gerado(s)</h2>
-            <div className="export-buttons">
-              <button className="btn btn-success btn-sm" onClick={() => exportarTxt(jogos, dezenas)}>TXT</button>
-              <InfoIcon><strong>TXT</strong>: Formato da extensao Loto Rico para Chrome. Permite o upload dos jogos no site da Caixa Economica Federal.</InfoIcon>
-              <button className="btn btn-secondary btn-sm" onClick={() => exportarPDF(jogos, dezenas, estrategia, janela, incluir, excluir)}>PDF</button>
-              <InfoIcon><strong>PDF</strong>: Documento formatado com todas as informacoes dos jogos, estrategia utilizada e resumo estatistico. Ideal para impressao e arquivo.</InfoIcon>
-              <button className="btn btn-secondary btn-sm" onClick={() => exportarCSV(jogos, dezenas, estrategia, janela)}>CSV</button>
-              <InfoIcon><strong>CSV</strong>: Planilha com uma dezena por celula, cabecalho com dados da estrategia e informacoes completas. Compativel com Excel e Google Sheets.</InfoIcon>
-            </div>
-          </div>
-          <div className="jogos-grid">
-            {jogos.map(jogo => (
-              <div key={jogo.id} className="jogo-item">
-                <span className="jogo-num">#{jogo.id}</span>
-                {jogo.dezenas.map((d, i) => (<span key={i} className="dezena-ball">{pad(d)}</span>))}
-                <span className="jogo-info">Soma: {jogo.soma} | Pares: {jogo.pares} | Ímpares: {jogo.impares}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
+                <button key={num} className={`volante-cell 
