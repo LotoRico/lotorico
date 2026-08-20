@@ -87,7 +87,7 @@ ${rowsXml}
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `lotorico_${jogos.length}jogos_${dezenas}dezenas.xls`
+  a.download = `lotorico_${jogos.length}jogos_${dezenas}dezenas.xml`
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -97,8 +97,57 @@ function exportarPDF(jogos, dezenas, estrategia, janela) {
   const hora = new Date().toLocaleTimeString('pt-BR')
   const estrat = getStrategyName(estrategia)
   const estratExp = getStrategyExplanation(estrategia)
+  const dezenasBalls = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#a855f7;color:#170d26;font-size:11px;font-weight:800;margin:2px;">${pad(d)}</span>`).join('')
+  const jogosHtml = jogos.map(j => `
+    <div style="background:#241535;border:1px solid #3d2854;border-radius:8px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="font-size:13px;font-weight:700;color:#b794d4;min-width:36px;">#${j.id}</span>
+      ${dezenasBalls(j.dezenas)}
+      <span style="margin-left:auto;font-size:12px;color:#b794d4;display:flex;gap:12px;">
+        <span>Soma: <strong style="color:#a855f7;">${j.soma}</strong></span>
+        <span>Pares: <strong style="color:#a855f7;">${j.pares}</strong></span>
+        <span>Impares: <strong style="color:#a855f7;">${j.impares}</strong></span>
+      </span>
+    </div>`).join('')
   const win = window.open('', '_blank')
-  win.document.write(`<html><head><title>Loto Rico - Jogos</title><style>body{font-family:Inter,Calibri,sans-serif;background:#170d26;color:#e9d5ff;padding:40px;margin:0}h1{color:#a855f7;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#b794d4;font-size:14px;margin-bottom:20px}.info{text-align:center;color:#b794d4;font-size:13px;margin-bottom:16px}.strategy-box{background:#241535;border:1px solid #3d2854;border-radius:8px;padding:16px;margin-bottom:24px}.strategy-title{color:#a855f7;font-weight:700;font-size:13px;margin-bottom:6px}.strategy-text{color:#b794d4;font-size:12px;line-height:1.5}table{width:100%;border-collapse:collapse}th{background:#a855f7;color:#170d26;padding:10px;font-size:13px}td{padding:8px;border:1px solid #3d2854;font-size:13px;text-align:center}tr:nth-child(even){background:#241535}.footer{margin-top:30px;text-align:center;font-size:11px;color:#b794d4}</style></head><body><h1>Loto Rico</h1><div class="sub">Inteligencia Estatistica para Loterias</div><div class="info">Lotofacil | ${data} ${hora}<br>Estrategia: ${estrat} | Janela: ${janela} concursos | ${dezenas} dezenas | ${jogos.length} jogo(s)</div><div class="strategy-box"><div class="strategy-title">Resumo da Estrategia: ${estrat}</div><div class="strategy-text">${estratExp}</div></div><table><tr><th>Jogo</th>${Array.from({length:dezenas},(_,i)=>`<th>D${pad(i+1)}</th>`).join('')}<th>Soma</th><th>Pares</th><th>Impares</th></tr>${jogos.map(j=>`<tr><td>#${j.id}</td>${j.dezenas.map(d=>`<td>${pad(d)}</td>`).join('')}<td>${j.soma}</td><td>${j.pares}</td><td>${j.impares}</td></tr>`).join('')}</table><div class="footer">Usuario: [Assinante] | Gerado por Loto Rico</div></body></html>`)
+  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Loto Rico - Jogos</title><style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',Calibri,system-ui,sans-serif;background:#170d26;color:#e9d5ff;padding:32px;}
+  .header{text-align:center;margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #a855f7;}
+  .header h1{font-size:28px;font-weight:800;color:#a855f7;margin-bottom:4px;}
+  .header .sub{color:#b794d4;font-size:14px;}
+  .badge{display:inline-block;padding:4px 16px;border-radius:12px;background:rgba(168,85,247,0.18);border:1px solid #a855f7;color:#a855f7;font-size:18px;font-weight:800;margin-bottom:12px;}
+  .info-card{background:#241535;border:1px solid #3d2854;border-radius:8px;padding:16px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap;justify-content:center;}
+  .info-item{text-align:center;}
+  .info-item .label{font-size:11px;color:#b794d4;text-transform:uppercase;letter-spacing:0.05em;}
+  .info-item .val{font-size:16px;font-weight:700;color:#a855f7;}
+  .strategy-box{background:#241535;border:1px solid #3d2854;border-radius:8px;padding:16px;margin-bottom:24px;}
+  .strategy-box .stitle{color:#a855f7;font-weight:700;font-size:14px;margin-bottom:8px;}
+  .strategy-box .stext{color:#b794d4;font-size:12px;line-height:1.6;}
+  .jogos-title{font-size:16px;font-weight:700;color:#a855f7;margin-bottom:12px;}
+  .footer{margin-top:32px;text-align:center;font-size:11px;color:#b794d4;padding-top:16px;border-top:1px solid #3d2854;}
+  @media print{body{padding:16px;}}
+  </style></head><body>
+  <div class="header">
+    <div class="badge">Lotofácil</div>
+    <h1>Loto Rico</h1>
+    <div class="sub">Inteligência Estatística para Loterias</div>
+  </div>
+  <div class="info-card">
+    <div class="info-item"><div class="label">Data</div><div class="val">${data}</div></div>
+    <div class="info-item"><div class="label">Hora</div><div class="val">${hora}</div></div>
+    <div class="info-item"><div class="label">Estratégia</div><div class="val">${estrat}</div></div>
+    <div class="info-item"><div class="label">Janela</div><div class="val">${janela} concursos</div></div>
+    <div class="info-item"><div class="label">Dezenas</div><div class="val">${dezenas}</div></div>
+    <div class="info-item"><div class="label">Jogos</div><div class="val">${jogos.length}</div></div>
+  </div>
+  <div class="strategy-box">
+    <div class="stitle">Resumo da Estratégia: ${estrat}</div>
+    <div class="stext">${estratExp}</div>
+  </div>
+  <div class="jogos-title">${jogos.length} Jogo(s) Gerado(s)</div>
+  ${jogosHtml}
+  <div class="footer">Usuario: [Assinante] | Gerado por Loto Rico</div>
+  </body></html>`)
   win.document.close()
   setTimeout(() => { win.print() }, 500)
 }
