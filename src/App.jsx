@@ -67,18 +67,16 @@ function exportarPDF(jogos, dezenas, estrategia, janela) {
   const hora = new Date().toLocaleTimeString('pt-BR')
   const estrat = getStrategyName(estrategia)
   const estratExp = getStrategyExplanation(estrategia)
-  const dezenasMini = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#a855f7;color:#170d26;font-size:9px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
-  const jogosHtml = jogos.map((j, idx) => `
-    <div class="jogo-row${idx >= 20 ? ' page-break' : ''}">
+  const dezenasMini = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#a855f7;color:#170d26;font-size:8px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
+  const jogosHtml = jogos.map((j, idx) => {
+    const breakClass = idx > 0 && idx % 20 === 0 ? ' page-break' : ''
+    return `
+    <div class="jogo-row${breakClass}">
       <span class="jogo-id">#${j.id}</span>
-      ${dezenasMini(j.dezenas)}
-      <span class="jogo-stats">S${j.soma} ${j.pares}p${j.impares}i</span>
-    </div>`).join('')
-  const totalPages = Math.ceil(jogos.length / 20)
-  let pageMarkers = ''
-  for (let p = 1; p < totalPages; p++) {
-    // already handled via page-break class at idx=20,40,60...
-  }
+      <span class="dezenas-block">${dezenasMini(j.dezenas)}</span>
+      <span class="jogo-stats">Soma: <strong>${j.soma}</strong> &nbsp;|&nbsp; Pares: <strong>${j.pares}</strong> &nbsp;|&nbsp; Impares: <strong>${j.impares}</strong></span>
+    </div>`
+  }).join('')
   const win = window.open('', '_blank')
   win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Loto Rico - Jogos</title><style>
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -95,12 +93,14 @@ function exportarPDF(jogos, dezenas, estrategia, janela) {
   .strategy-box .stitle{color:#a855f7;font-weight:700;font-size:12px;margin-bottom:4px;}
   .strategy-box .stext{color:#b794d4;font-size:10px;line-height:1.4;}
   .jogo-title{font-size:13px;font-weight:700;color:#a855f7;margin-bottom:8px;}
-  .jogo-row{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:6px 10px;margin-bottom:4px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
-  .jogo-id{font-size:10px;font-weight:700;color:#b794d4;min-width:28px;}
+  .jogo-row{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:5px 8px;margin-bottom:3px;display:flex;align-items:center;gap:6px;}
+  .jogo-id{font-size:10px;font-weight:700;color:#b794d4;min-width:24px;}
+  .dezenas-block{display:flex;flex-wrap:wrap;gap:1px;flex:0 1 auto;}
   .jogo-stats{margin-left:auto;font-size:10px;color:#b794d4;white-space:nowrap;}
+  .jogo-stats strong{color:#a855f7;}
   .footer{margin-top:16px;text-align:center;font-size:9px;color:#b794d4;padding-top:10px;border-top:1px solid #3d2854;}
   .page-break{page-break-before:always;}
-  @media print{body{padding:12px;}.header{margin-bottom:10px;padding-bottom:8px;}.info-card,.strategy-box{padding:8px;}.jogo-row{padding:4px 8px;margin-bottom:3px;}}
+  @media print{body{padding:12px;}.header{margin-bottom:10px;padding-bottom:8px;}.info-card,.strategy-box{padding:8px;}.jogo-row{padding:4px 6px;margin-bottom:2px;}}
   </style></head><body>
   <div class="header">
     <div class="badge">Lotofácil</div>
