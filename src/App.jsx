@@ -366,7 +366,7 @@ export default function App() {
               <div key={jogo.id} className="jogo-item">
                 <span className="jogo-num">#{jogo.id}</span>
                 {jogo.dezenas.map((d, i) => (<span key={i} className="dezena-ball">{pad(d)}</span>))}
-                <span className="jogo-info">S{jogo.soma} | {jogo.pares}p {jogo.impares}i</span>
+                <span className="jogo-info">Soma: {jogo.soma} | Pares: {jogo.pares} | Ímpares: {jogo.impares}</span>
               </div>
             ))}
           </div>
