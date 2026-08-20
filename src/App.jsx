@@ -14,14 +14,6 @@ function getThermalClass(c, num) {
   return ''
 }
 
-function getThermalDot(c, num) {
-  if (!c) return null
-  if (c.quentes?.includes(num)) return 'dot-quente'
-  if (c.mornos?.includes(num)) return 'dot-morno'
-  if (c.frios?.includes(num)) return 'dot-frio'
-  return null
-}
-
 function pad(n) { return String(n).padStart(2, '0') }
 
 function getStrategyName(estrategia) {
@@ -215,6 +207,12 @@ export default function App() {
   const mornosSorted = classificacao ? [...classificacao.mornos].sort((a, b) => a - b) : []
   const friosSorted = classificacao ? [...classificacao.frios].sort((a, b) => a - b) : []
 
+  function getBadgeClass(num) {
+    if (incluir.includes(num)) return 'badge-incluir'
+    if (excluir.includes(num)) return 'badge-excluir'
+    return ''
+  }
+
   return (
     <div className="app">
       <div className="header">
@@ -251,19 +249,19 @@ export default function App() {
             <div>
               <strong style={{ fontSize: '13px', color: 'var(--quente)' }}>Quentes:</strong>
               <div className="thermal-row">
-                {quentesSorted.map(n => (<span key={n} className="badge badge-quente">{pad(n)}</span>))}
+                {quentesSorted.map(n => (<span key={n} className={`badge badge-quente ${getBadgeClass(n)}`}>{pad(n)}</span>))}
               </div>
             </div>
             <div>
               <strong style={{ fontSize: '13px', color: 'var(--morno)' }}>Mornos:</strong>
               <div className="thermal-row">
-                {mornosSorted.map(n => (<span key={n} className="badge badge-morno">{pad(n)}</span>))}
+                {mornosSorted.map(n => (<span key={n} className={`badge badge-morno ${getBadgeClass(n)}`}>{pad(n)}</span>))}
               </div>
             </div>
             <div>
               <strong style={{ fontSize: '13px', color: 'var(--frio)' }}>Frios:</strong>
               <div className="thermal-row">
-                {friosSorted.map(n => (<span key={n} className="badge badge-frio">{pad(n)}</span>))}
+                {friosSorted.map(n => (<span key={n} className={`badge badge-frio ${getBadgeClass(n)}`}>{pad(n)}</span>))}
               </div>
             </div>
           </div>
@@ -291,14 +289,10 @@ export default function App() {
               const isIncluir = incluir.includes(num)
               const isExcluir = excluir.includes(num)
               const thermal = getThermalClass(classificacao, num)
-              const dot = getThermalDot(classificacao, num)
               const freq = frequencia?.[num]?.frequencia
               const pct = frequencia?.[num]?.percentual
               return (
-                <button key={num} className={`volante-cell ${thermal} ${isIncluir ? 'cell-incluir' : ''} ${isExcluir ? 'cell-excluir' : ''}`} onClick={() => handleVolanteClick(num)} title={`Freq: ${freq || '?'} (${pct || '?'}%)`}>
-                  {pad(num)}
-                  {dot && <span className={`thermal-dot ${dot}`} />}
-                </button>
+                <button key={num} className={`volante-cell ${thermal} ${isIncluir ? 'cell-incluir' : ''} ${isExcluir ? 'cell-excluir' : ''}`} onClick={() => handleVolanteClick(num)} title={`Freq: ${freq || '?'} (${pct || '?'}%)`}>{pad(num)}</button>
               )
             })}
           </div>
