@@ -185,12 +185,10 @@ export default function App() {
     <div className="app">
       <div className="header">
         <div className="header-left">
-          <div>
-            <h1>Loto Rico</h1>
-            <p>Inteligência Estatística para Loterias</p>
-          </div>
-          <span className="lottery-badge">Lotofácil</span>
+          <h1>Loto Rico</h1>
+          <p>Inteligência Estatística para Loterias</p>
         </div>
+        <span className="lottery-badge">Lotofácil</span>
         <div className="header-actions">
           <button className="btn btn-secondary btn-sm" onClick={atualizarBanco}>Atualizar Banco</button>
           <button className="btn btn-secondary btn-sm" onClick={carregarStats} disabled={loadingStats}>
