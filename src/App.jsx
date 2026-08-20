@@ -27,6 +27,30 @@ function exportarTxt(jogos, dezenas) {
   URL.revokeObjectURL(url)
 }
 
+function exportarXLSX(jogos, dezenas, estrategia, janela) {
+  const data = new Date().toLocaleDateString('pt-BR')
+  const hora = new Date().toLocaleTimeString('pt-BR')
+  const estrat = { mista: 'Mista', quentes: 'Quentes', frios: 'Frios', equilibrada: 'Equilibrada' }[estrategia] || estrategia
+  const html = `<table border="1"><tr><th colspan="5" style="background:#a855f7;color:#170d26;font-size:14px;padding:10px;">Loto Rico - Inteligencia Estatistica para Loterias</th></tr><tr><td colspan="5" style="padding:8px;background:#241535;">Lotofacil | ${data} ${hora} | Estrategia: ${estrat} | Janela: ${janela} | ${dezenas} dezenas | ${jogos.length} jogo(s)</td></tr><tr style="background:#332049;"><th>Jogo</th><th>Dezenas</th><th>Soma</th><th>Pares</th><th>Impares</th></tr>${jogos.map(j => `<tr><td>#${j.id}</td><td>${j.dezenas.map(pad).join(' - ')}</td><td>${j.soma}</td><td>${j.pares}</td><td>${j.impares}</td></tr>`).join('')}<tr><td colspan="5" style="padding:8px;font-size:11px;color:#b794d4;">Usuario: [Assinante] | Gerado por Loto Rico</td></tr></table>`
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `lotorico_${jogos.length}jogos_${dezenas}dezenas.xls`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function exportarPDF(jogos, dezenas, estrategia, janela) {
+  const data = new Date().toLocaleDateString('pt-BR')
+  const hora = new Date().toLocaleTimeString('pt-BR')
+  const estrat = { mista: 'Mista', quentes: 'Quentes', frios: 'Frios', equilibrada: 'Equilibrada' }[estrategia] || estrategia
+  const win = window.open('', '_blank')
+  win.document.write(`<html><head><title>Loto Rico - Jogos</title><style>body{font-family:Inter,sans-serif;background:#170d26;color:#e9d5ff;padding:40px;margin:0}h1{color:#a855f7;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#b794d4;font-size:14px;margin-bottom:20px}.info{text-align:center;color:#b794d4;font-size:13px;margin-bottom:24px}table{width:100%;border-collapse:collapse}th{background:#a855f7;color:#170d26;padding:10px;font-size:13px}td{padding:8px;border:1px solid #3d2854;font-size:13px}tr:nth-child(even){background:#241535}.footer{margin-top:30px;text-align:center;font-size:11px;color:#b794d4}</style></head><body><h1>Loto Rico</h1><div class="sub">Inteligencia Estatistica para Loterias</div><div class="info">Lotofacil | ${data} ${hora}<br>Estrategia: ${estrat} | Janela: ${janela} | ${dezenas} dezenas | ${jogos.length} jogo(s)</div><table><tr><th>Jogo</th><th>Dezenas</th><th>Soma</th><th>Pares</th><th>Impares</th></tr>${jogos.map(j => `<tr><td>#${j.id}</td><td>${j.dezenas.map(pad).join(' - ')}</td><td>${j.soma}</td><td>${j.pares}</td><td>${j.impares}</td></tr>`).join('')}</table><div class="footer">Usuario: [Assinante] | Gerado por Loto Rico</div></body></html>`)
+  win.document.close()
+  setTimeout(() => { win.print() }, 500)
+}
+
 function InfoIcon({ children }) {
   return (
     <span className="info-icon">i<span className="info-tooltip">{children}</span></span>
@@ -78,10 +102,7 @@ export default function App() {
     }
   }
 
-  function limparSelecao() {
-    setIncluir([])
-    setExcluir([])
-  }
+  function limparSelecao() { setIncluir([]); setExcluir([]) }
 
   async function gerarJogos() {
     setLoadingJogos(true)
@@ -91,15 +112,8 @@ export default function App() {
       if (incluir.length) url += `&incluir=${incluir.join(',')}`
       if (excluir.length) url += `&excluir=${excluir.join(',')}`
       const r = await fetchAPI(url)
-      if (r.sucesso) {
-        setJogos(r.dados.jogos)
-      } else {
-        setErro(r.mensagem)
-        setJogos([])
-      }
-    } catch (e) {
-      setErro('Erro ao gerar jogos')
-    }
+      if (r.sucesso) { setJogos(r.dados.jogos) } else { setErro(r.mensagem); setJogos([]) }
+    } catch (e) { setErro('Erro ao gerar jogos') }
     setLoadingJogos(false)
   }
 
@@ -107,14 +121,8 @@ export default function App() {
     setErro('')
     try {
       const r = await fetchAPI('atualizar')
-      if (r.sucesso) {
-        carregarStats()
-      } else {
-        setErro(r.mensagem)
-      }
-    } catch (e) {
-      setErro('Erro ao atualizar banco')
-    }
+      if (r.sucesso) { carregarStats() } else { setErro(r.mensagem) }
+    } catch (e) { setErro('Erro ao atualizar banco') }
   }
 
   const classificacao = stats?.classificacao_termica
@@ -146,36 +154,12 @@ export default function App() {
 
       {stats && (
         <div className="dashboard">
-          <div className="stat-card">
-            <div className="label">Registros no Banco</div>
-            <div className="value">{stats.total_registros_banco}</div>
-            <div className="sub">Concurso {stats.concurso_final}</div>
-          </div>
-          <div className="stat-card">
-            <div className="label">Janela de Análise</div>
-            <div className="value">{stats.total_analisados}</div>
-            <div className="sub">Últimos concursos</div>
-          </div>
-          <div className="stat-card">
-            <div className="label">Soma Média</div>
-            <div className="value">{stats.soma?.media}</div>
-            <div className="sub">Min: {stats.soma?.minimo} | Max: {stats.soma?.maximo}</div>
-          </div>
-          <div className="stat-card">
-            <div className="label">Pares / Ímpares</div>
-            <div className="value">{stats.paridade?.media_pares} / {stats.paridade?.media_impares}</div>
-            <div className="sub">Média histórica</div>
-          </div>
-          <div className="stat-card">
-            <div className="label">Repetição Média</div>
-            <div className="value">{stats.repeticao?.media_repeticao}</div>
-            <div className="sub">Última: {stats.repeticao?.ultima_repeticao}</div>
-          </div>
-          <div className="stat-card">
-            <div className="label">Sequências Média</div>
-            <div className="value">{stats.sequencias?.media_sequencias}</div>
-            <div className="sub">Max: {stats.sequencias?.max_sequencia_historica}</div>
-          </div>
+          <div className="stat-card"><div className="label">Registros no Banco</div><div className="value">{stats.total_registros_banco}</div><div className="sub">Concurso {stats.concurso_final}</div></div>
+          <div className="stat-card"><div className="label">Janela de Análise</div><div className="value">{stats.total_analisados}</div><div className="sub">Últimos concursos</div></div>
+          <div className="stat-card"><div className="label">Soma Média</div><div className="value">{stats.soma?.media}</div><div className="sub">Min: {stats.soma?.minimo} | Max: {stats.soma?.maximo}</div></div>
+          <div className="stat-card"><div className="label">Pares / Ímpares</div><div className="value">{stats.paridade?.media_pares} / {stats.paridade?.media_impares}</div><div className="sub">Média histórica</div></div>
+          <div className="stat-card"><div className="label">Repetição Média</div><div className="value">{stats.repeticao?.media_repeticao}</div><div className="sub">Última: {stats.repeticao?.ultima_repeticao}</div></div>
+          <div className="stat-card"><div className="label">Sequências Média</div><div className="value">{stats.sequencias?.media_sequencias}</div><div className="sub">Max: {stats.sequencias?.max_sequencia_historica}</div></div>
         </div>
       )}
 
@@ -186,25 +170,19 @@ export default function App() {
             <div>
               <strong style={{ fontSize: '13px', color: 'var(--quente)' }}>Quentes:</strong>
               <div className="thermal-row">
-                {quentesSorted.map(n => (
-                  <span key={n} className="badge badge-quente">{pad(n)}</span>
-                ))}
+                {quentesSorted.map(n => (<span key={n} className="badge badge-quente">{pad(n)}</span>))}
               </div>
             </div>
             <div>
               <strong style={{ fontSize: '13px', color: 'var(--morno)' }}>Mornos:</strong>
               <div className="thermal-row">
-                {mornosSorted.map(n => (
-                  <span key={n} className="badge badge-morno">{pad(n)}</span>
-                ))}
+                {mornosSorted.map(n => (<span key={n} className="badge badge-morno">{pad(n)}</span>))}
               </div>
             </div>
             <div>
               <strong style={{ fontSize: '13px', color: 'var(--frio)' }}>Frios:</strong>
               <div className="thermal-row">
-                {friosSorted.map(n => (
-                  <span key={n} className="badge badge-frio">{pad(n)}</span>
-                ))}
+                {friosSorted.map(n => (<span key={n} className="badge badge-frio">{pad(n)}</span>))}
               </div>
             </div>
           </div>
@@ -215,12 +193,8 @@ export default function App() {
         <div className="card">
           <h2>Volante Interativo</h2>
           <div className="mode-toggle">
-            <button className={`mode-btn ${mode === 'incluir' ? 'active' : ''}`} onClick={() => setMode('incluir')}>
-              Incluir ({incluir.length})
-            </button>
-            <button className={`mode-btn ${mode === 'excluir' ? 'active' : ''}`} onClick={() => setMode('excluir')}>
-              Excluir ({excluir.length})
-            </button>
+            <button className={`mode-btn ${mode === 'incluir' ? 'active' : ''}`} onClick={() => setMode('incluir')}>Incluir ({incluir.length})</button>
+            <button className={`mode-btn ${mode === 'excluir' ? 'active' : ''}`} onClick={() => setMode('excluir')}>Excluir ({excluir.length})</button>
           </div>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
             Modo atual: <strong style={{ color: 'var(--accent)' }}>{mode === 'incluir' ? 'Incluir' : 'Excluir'}</strong>
@@ -239,47 +213,31 @@ export default function App() {
               const freq = frequencia?.[num]?.frequencia
               const pct = frequencia?.[num]?.percentual
               return (
-                <button
-                  key={num}
-                  className={`volante-cell ${thermal} ${isIncluir ? 'cell-incluir' : ''} ${isExcluir ? 'cell-excluir' : ''}`}
-                  onClick={() => handleVolanteClick(num)}
-                  title={`Freq: ${freq || '?'} (${pct || '?'}%)`}
-                >
-                  {pad(num)}
-                </button>
+                <button key={num} className={`volante-cell ${thermal} ${isIncluir ? 'cell-incluir' : ''} ${isExcluir ? 'cell-excluir' : ''}`} onClick={() => handleVolanteClick(num)} title={`Freq: ${freq || '?'} (${pct || '?'}%)`}>{pad(num)}</button>
               )
             })}
           </div>
           <div style={{ marginTop: '12px' }}>
             <strong style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Incluir:</strong>
             <div className="tag-row">
-              {incluir.length === 0
-                ? <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Nenhuma</span>
-                : incluir.sort((a, b) => a - b).map(n => (
-                    <span key={n} className="tag tag-incluir">{pad(n)}</span>
-                  ))
-              }
+              {incluir.length === 0 ? <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Nenhuma</span> : incluir.sort((a, b) => a - b).map(n => (<span key={n} className="tag tag-incluir">{pad(n)}</span>))}
             </div>
             <strong style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px', display: 'block' }}>Excluir:</strong>
             <div className="tag-row">
-              {excluir.length === 0
-                ? <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Nenhuma</span>
-                : excluir.sort((a, b) => a - b).map(n => (
-                    <span key={n} className="tag tag-excluir">{pad(n)}</span>
-                  ))
-              }
+              {excluir.length === 0 ? <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Nenhuma</span> : excluir.sort((a, b) => a - b).map(n => (<span key={n} className="tag tag-excluir">{pad(n)}</span>))}
             </div>
           </div>
-          <button className="btn btn-secondary btn-sm" style={{ marginTop: '12px', width: '100%' }} onClick={limparSelecao}>
-            Limpar Seleção
-          </button>
+          <button className="btn btn-secondary btn-sm" style={{ marginTop: '12px', width: '100%' }} onClick={limparSelecao}>Limpar Seleção</button>
         </div>
 
         <div className="card">
           <h2>Painel de Controle</h2>
           <div className="form-group">
             <label>Estratégia <InfoIcon>
-              <strong>Mista</strong> combina frequência e atraso. <strong>Quentes</strong> prioriza as mais sorteadas. <strong>Frios</strong> prioriza as mais atrasadas. <strong>Equilibrada</strong> busca dezenas próximas da média histórica.
+              <strong>Mista (Freq + Atraso)</strong>: Combina frequencia de sorteio com tempo de atraso. Dezenas com boa frequencia e atraso medio recebem maior peso. Ideal para quem busca equilibrio entre tendencias.<br/><br/>
+              <strong>Quentes</strong>: Prioriza as dezenas mais sorteadas na janela analisada. Aproveita a tendencia de continuidade de dezenas em alta. Recomendado quando ha padrao de repeticao recente.<br/><br/>
+              <strong>Frios</strong>: Prioriza as dezenas mais atrasadas (ha mais tempo sem aparecer). Baseado na lei dos grandes numeros, onde dezenas muito atrasadas tendem a retornar. Recomendado para quem busca retorno a media.<br/><br/>
+              <strong>Equilibrada</strong>: Seleciona dezenas proximas a media historica de frequencia. Evita extremos (nem muito quentes, nem muito frias). Recomendado para apostas conservadoras.
             </InfoIcon></label>
             <select value={estrategia} onChange={e => setEstrategia(e.target.value)}>
               <option value="mista">Mista (Freq + Atraso)</option>
@@ -289,21 +247,15 @@ export default function App() {
             </select>
           </div>
           <div className="form-group">
-            <label>Dezenas por jogo: <strong style={{ color: 'var(--accent)' }}>{dezenas}</strong> <InfoIcon>
-              Quantidade de dezenas em cada jogo gerado. Na Lotofácil, o volante aceita de <strong>15 a 20 dezenas</strong> por aposta.
-            </InfoIcon></label>
+            <label>Dezenas por jogo: <strong style={{ color: 'var(--accent)' }}>{dezenas}</strong> <InfoIcon>Quantidade de dezenas em cada jogo gerado. Na Lotofácil, o volante aceita de <strong>15 a 20 dezenas</strong> por aposta.</InfoIcon></label>
             <input type="range" min="15" max="20" value={dezenas} onChange={e => setDezenas(parseInt(e.target.value, 10))} />
           </div>
           <div className="form-group">
-            <label>Quantidade de jogos: <strong style={{ color: 'var(--accent)' }}>{quantidade}</strong> <InfoIcon>
-              Número de combinações a serem geradas no lote atual. Aceita de <strong>1 a 300 jogos</strong> por geração.
-            </InfoIcon></label>
+            <label>Quantidade de jogos: <strong style={{ color: 'var(--accent)' }}>{quantidade}</strong> <InfoIcon>Número de combinações a serem geradas no lote atual. Aceita de <strong>1 a 300 jogos</strong> por geração.</InfoIcon></label>
             <input type="range" min="1" max="300" value={quantidade} onChange={e => setQuantidade(parseInt(e.target.value, 10))} />
           </div>
           <div className="form-group">
-            <label>Janela de análise: <strong style={{ color: 'var(--accent)' }}>{janela}</strong> concursos <InfoIcon>
-              Número de concursos recentes usados para calcular as estatísticas. Janelas menores capturam tendências recentes; maiores suavizam anomalias. Aceita de <strong>5 a 50 concursos</strong>.
-            </InfoIcon></label>
+            <label>Janela de análise: <strong style={{ color: 'var(--accent)' }}>{janela}</strong> concursos <InfoIcon>Número de concursos recentes usados para calcular as estatísticas. Janelas menores capturam tendências recentes; maiores suavizam anomalias. Aceita de <strong>5 a 50 concursos</strong>.</InfoIcon></label>
             <input type="range" min="5" max="50" value={janela} onChange={e => setJanela(parseInt(e.target.value, 10))} />
           </div>
           <button className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }} onClick={gerarJogos} disabled={loadingJogos}>
@@ -320,9 +272,7 @@ export default function App() {
               <strong style={{ fontSize: '13px' }}>Concurso {s.concurso}</strong>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>{s.data_sorteio}</span>
               <div className="ultimos-row">
-                {s.dezenas.map((d, i) => (
-                  <span key={i} className="ultimo-badge">{pad(d)}</span>
-                ))}
+                {s.dezenas.map((d, i) => (<span key={i} className="ultimo-badge">{pad(d)}</span>))}
               </div>
             </div>
           ))}
@@ -333,15 +283,18 @@ export default function App() {
         <div className="card jogos-section">
           <div className="jogos-header">
             <h2>{jogos.length} Jogo(s) Gerado(s)</h2>
-            <button className="btn btn-success btn-sm" onClick={() => exportarTxt(jogos, dezenas)}>Exportar .txt</button>
+            <div className="export-buttons">
+              <button className="btn btn-success btn-sm" onClick={() => exportarTxt(jogos, dezenas)} title="Formato para a extensão Loto Rico - upload automático no site da Caixa">TXT</button>
+              <button className="btn btn-secondary btn-sm" onClick={() => exportarPDF(jogos, dezenas, estrategia, janela)}>PDF</button>
+              <button className="btn btn-secondary btn-sm" onClick={() => exportarXLSX(jogos, dezenas, estrategia, janela)}>XLSX</button>
+            </div>
           </div>
+          <div className="export-note">TXT: formato para a extensão Loto Rico (upload automático no site da Caixa) | PDF e XLSX: documentos com informações completas</div>
           <div className="jogos-grid">
             {jogos.map(jogo => (
               <div key={jogo.id} className="jogo-item">
                 <span className="jogo-num">#{jogo.id}</span>
-                {jogo.dezenas.map((d, i) => (
-                  <span key={i} className="dezena-ball">{pad(d)}</span>
-                ))}
+                {jogo.dezenas.map((d, i) => (<span key={i} className="dezena-ball">{pad(d)}</span>))}
                 <span className="jogo-info">S{jogo.soma} | {jogo.pares}p {jogo.impares}i</span>
               </div>
             ))}
