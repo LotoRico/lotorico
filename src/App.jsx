@@ -14,6 +14,14 @@ function getThermalClass(c, num) {
   return ''
 }
 
+function getThermalDot(c, num) {
+  if (!c) return null
+  if (c.quentes?.includes(num)) return 'dot-quente'
+  if (c.mornos?.includes(num)) return 'dot-morno'
+  if (c.frios?.includes(num)) return 'dot-frio'
+  return null
+}
+
 function pad(n) { return String(n).padStart(2, '0') }
 
 function getStrategyName(estrategia) {
@@ -283,10 +291,14 @@ export default function App() {
               const isIncluir = incluir.includes(num)
               const isExcluir = excluir.includes(num)
               const thermal = getThermalClass(classificacao, num)
+              const dot = getThermalDot(classificacao, num)
               const freq = frequencia?.[num]?.frequencia
               const pct = frequencia?.[num]?.percentual
               return (
-                <button key={num} className={`volante-cell ${thermal} ${isIncluir ? 'cell-incluir' : ''} ${isExcluir ? 'cell-excluir' : ''}`} onClick={() => handleVolanteClick(num)} title={`Freq: ${freq || '?'} (${pct || '?'}%)`}>{pad(num)}</button>
+                <button key={num} className={`volante-cell ${thermal} ${isIncluir ? 'cell-incluir' : ''} ${isExcluir ? 'cell-excluir' : ''}`} onClick={() => handleVolanteClick(num)} title={`Freq: ${freq || '?'} (${pct || '?'}%)`}>
+                  {pad(num)}
+                  {dot && <span className={`thermal-dot ${dot}`} />}
+                </button>
               )
             })}
           </div>
