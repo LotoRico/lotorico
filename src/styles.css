@@ -9,7 +9,7 @@
   --accent: #a855f7;
   --accent-hover: #9333ea;
   --success: #22c55e;
-  --danger: #ef4444;
+  --danger: #ff1744;
   --quente: #f43f5e;
   --morno: #facc15;
   --frio: #60a5fa;
@@ -44,12 +44,15 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', system-u
 .stat-card .label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .stat-card .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
 .stat-card .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-/* Thermal badges */
+/* Thermal badges - na lista de Classificacao Termica */
 .thermal-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-.badge { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 24px; padding: 0 6px; border-radius: 4px; font-size: 12px; font-weight: 700; }
+.badge { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 24px; padding: 0 6px; border-radius: 4px; font-size: 12px; font-weight: 700; border: 2px solid transparent; transition: all 0.15s; }
 .badge-quente { background: rgba(244,63,94,0.25); color: var(--quente); }
 .badge-morno { background: rgba(250,204,21,0.2); color: var(--morno); }
 .badge-frio { background: rgba(96,165,250,0.2); color: var(--frio); }
+/* Badges selecionados na lista termica */
+.badge-incluir { border-color: var(--success) !important; box-shadow: 0 0 8px rgba(34,197,94,0.6); background: rgba(34,197,94,0.25) !important; color: #bbf7d0 !important; }
+.badge-excluir { border-color: var(--danger) !important; box-shadow: 0 0 8px rgba(255,23,68,0.6); background: rgba(255,23,68,0.25) !important; color: #ffcdd2 !important; }
 /* Main grid */
 .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
 @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
@@ -60,21 +63,14 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', system-u
 .volante-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-width: 360px; margin: 0 auto; }
 .volante-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; border: 2px solid transparent; border-radius: 8px; cursor: pointer; transition: all 0.12s; position: relative; }
 .volante-cell:hover { transform: scale(1.08); }
-/* Thermal no volante - cores intensas com borda + indicador */
+/* Thermal no volante - cores intensas */
 .thermal-quente { background: rgba(244,63,94,0.35) !important; color: #ffd0d8 !important; border-color: rgba(244,63,94,0.6) !important; box-shadow: inset 0 0 8px rgba(244,63,94,0.2); }
 .thermal-morno { background: rgba(250,204,21,0.25) !important; color: #fef3c7 !important; border-color: rgba(250,204,21,0.5) !important; box-shadow: inset 0 0 8px rgba(250,204,21,0.15); }
 .thermal-frio { background: rgba(96,165,250,0.25) !important; color: #dbeafe !important; border-color: rgba(96,165,250,0.5) !important; box-shadow: inset 0 0 8px rgba(96,165,250,0.15); }
-/* Indicador termico (ponto no canto) - sempre visivel */
-.thermal-dot { position: absolute; top: 3px; right: 3px; width: 8px; height: 8px; border-radius: 50%; pointer-events: none; z-index: 2; }
-.dot-quente { background: #f43f5e; box-shadow: 0 0 4px rgba(244,63,94,0.8); }
-.dot-morno { background: #facc15; box-shadow: 0 0 4px rgba(250,204,21,0.8); }
-.dot-frio { background: #60a5fa; box-shadow: 0 0 4px rgba(96,165,250,0.8); }
-/* Incluir - mantem o fundo termico, adiciona borda verde + glow */
-.cell-incluir { border-color: var(--success) !important; box-shadow: 0 0 12px rgba(34,197,94,0.6), inset 0 0 6px rgba(34,197,94,0.2) !important; }
-.cell-incluir::after { content: '✓'; position: absolute; bottom: 2px; left: 3px; font-size: 10px; color: var(--success); font-weight: 900; pointer-events: none; z-index: 2; }
-/* Excluir - mantem o fundo termico, adiciona borda vermelha + glow */
-.cell-excluir { border-color: var(--danger) !important; box-shadow: 0 0 12px rgba(239,68,68,0.6), inset 0 0 6px rgba(239,68,68,0.2) !important; }
-.cell-excluir::after { content: '✕'; position: absolute; bottom: 2px; left: 3px; font-size: 10px; color: var(--danger); font-weight: 900; pointer-events: none; z-index: 2; }
+/* Incluir - mantem o fundo termico, borda verde radioativa + glow forte */
+.cell-incluir { border-color: #00ff66 !important; box-shadow: 0 0 14px rgba(0,255,102,0.7), inset 0 0 6px rgba(0,255,102,0.25) !important; }
+/* Excluir - mantem o fundo termico, borda vermelho radioativo + glow forte */
+.cell-excluir { border-color: #ff1744 !important; box-shadow: 0 0 14px rgba(255,23,68,0.7), inset 0 0 6px rgba(255,23,68,0.25) !important; }
 /* Mode toggle */
 .mode-toggle { display: flex; gap: 4px; margin: 12px 0; background: var(--bg); border-radius: 6px; padding: 3px; }
 .mode-btn { flex: 1; padding: 6px; border: none; border-radius: 4px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-muted); transition: all 0.15s; }
@@ -96,7 +92,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', system-u
 .tag-row { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; min-height: 24px; }
 .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 600; }
 .tag-incluir { background: rgba(34,197,94,0.2); color: var(--success); }
-.tag-excluir { background: rgba(239,68,68,0.2); color: var(--danger); }
+.tag-excluir { background: rgba(255,23,68,0.2); color: var(--danger); }
 /* Jogos */
 .jogos-section { margin-top: 20px; }
 .jogos-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
@@ -111,7 +107,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', system-u
 /* Alert */
 .alert { padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; }
 .alert-success { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
-.alert-error { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+.alert-error { background: rgba(255,23,68,0.15); color: var(--danger); border: 1px solid rgba(255,23,68,0.3); }
 .alert-info { background: rgba(96,165,250,0.1); color: var(--frio); border: 1px solid rgba(96,165,250,0.2); }
 /* Ultimos sorteios */
 .ultimos-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
