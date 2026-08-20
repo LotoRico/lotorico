@@ -38,7 +38,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', system-u
 .btn-sm { padding: 6px 12px; font-size: 13px; }
 /* Export buttons */
 .export-buttons { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.export-note { font-size: 11px; color: var(--text-muted); margin-top: 4px; text-align: right; }
 /* Dashboard */
 .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
 .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
@@ -88,11 +87,11 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', system-u
 .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 600; }
 .tag-incluir { background: rgba(34,197,94,0.2); color: var(--success); }
 .tag-excluir { background: rgba(239,68,68,0.2); color: var(--danger); }
-/* Jogos - estreito e centralizado */
+/* Jogos - alargado para caber 20 bolinhas + info com respiro */
 .jogos-section { margin-top: 20px; }
 .jogos-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
-.jogos-grid { display: flex; flex-direction: column; gap: 8px; max-width: 620px; margin: 0 auto; }
-.jogo-item { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); }
+.jogos-grid { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 920px; margin: 0 auto; }
+.jogo-item { display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); width: 100%; }
 .jogo-num { font-size: 13px; font-weight: 700; color: var(--text-muted); min-width: 36px; flex-shrink: 0; }
 .dezena-ball { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--bg); font-size: 10px; font-weight: 800; flex-shrink: 0; }
 .jogo-info { margin-left: auto; font-size: 11px; color: var(--text-muted); white-space: nowrap; }
