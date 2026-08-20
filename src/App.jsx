@@ -27,9 +27,9 @@ function exportarTxt(jogos, dezenas) {
   URL.revokeObjectURL(url)
 }
 
-function InfoIcon({ text }) {
+function InfoIcon({ children }) {
   return (
-    <span className="info-icon">i<span className="info-tooltip">{text}</span></span>
+    <span className="info-icon">i<span className="info-tooltip">{children}</span></span>
   )
 }
 
@@ -119,14 +119,20 @@ export default function App() {
 
   const classificacao = stats?.classificacao_termica
   const frequencia = stats?.frequencia
+  const quentesSorted = classificacao ? [...classificacao.quentes].sort((a, b) => a - b) : []
+  const mornosSorted = classificacao ? [...classificacao.mornos].sort((a, b) => a - b) : []
+  const friosSorted = classificacao ? [...classificacao.frios].sort((a, b) => a - b) : []
 
   return (
     <div className="app">
+      <div className="lottery-badge-container">
+        <span className="lottery-badge">Lotofácil</span>
+      </div>
+
       <div className="header">
         <div>
           <h1>Loto Rico</h1>
-          <p>Inteligencia Estatistica para Loterias</p>
-          <span className="lottery-badge">Lotofacil</span>
+          <p>Inteligência Estatística para Loterias</p>
         </div>
         <div className="header-actions">
           <button className="btn btn-secondary btn-sm" onClick={atualizarBanco}>Atualizar Banco</button>
@@ -146,27 +152,27 @@ export default function App() {
             <div className="sub">Concurso {stats.concurso_final}</div>
           </div>
           <div className="stat-card">
-            <div className="label">Janela de Analise</div>
+            <div className="label">Janela de Análise</div>
             <div className="value">{stats.total_analisados}</div>
-            <div className="sub">Ultimos concursos</div>
+            <div className="sub">Últimos concursos</div>
           </div>
           <div className="stat-card">
-            <div className="label">Soma Media</div>
+            <div className="label">Soma Média</div>
             <div className="value">{stats.soma?.media}</div>
             <div className="sub">Min: {stats.soma?.minimo} | Max: {stats.soma?.maximo}</div>
           </div>
           <div className="stat-card">
-            <div className="label">Pares / Impares</div>
+            <div className="label">Pares / Ímpares</div>
             <div className="value">{stats.paridade?.media_pares} / {stats.paridade?.media_impares}</div>
-            <div className="sub">Media historica</div>
+            <div className="sub">Média histórica</div>
           </div>
           <div className="stat-card">
-            <div className="label">Repeticao Media</div>
+            <div className="label">Repetição Média</div>
             <div className="value">{stats.repeticao?.media_repeticao}</div>
-            <div className="sub">Ultima: {stats.repeticao?.ultima_repeticao}</div>
+            <div className="sub">Última: {stats.repeticao?.ultima_repeticao}</div>
           </div>
           <div className="stat-card">
-            <div className="label">Sequencias Media</div>
+            <div className="label">Sequências Média</div>
             <div className="value">{stats.sequencias?.media_sequencias}</div>
             <div className="sub">Max: {stats.sequencias?.max_sequencia_historica}</div>
           </div>
@@ -175,12 +181,12 @@ export default function App() {
 
       {classificacao && (
         <div className="card" style={{ marginBottom: '16px' }}>
-          <h2>Classificacao Termica</h2>
+          <h2>Classificação Térmica</h2>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             <div>
               <strong style={{ fontSize: '13px', color: 'var(--quente)' }}>Quentes:</strong>
               <div className="thermal-row">
-                {classificacao.quentes.map(n => (
+                {quentesSorted.map(n => (
                   <span key={n} className="badge badge-quente">{pad(n)}</span>
                 ))}
               </div>
@@ -188,7 +194,7 @@ export default function App() {
             <div>
               <strong style={{ fontSize: '13px', color: 'var(--morno)' }}>Mornos:</strong>
               <div className="thermal-row">
-                {classificacao.mornos.map(n => (
+                {mornosSorted.map(n => (
                   <span key={n} className="badge badge-morno">{pad(n)}</span>
                 ))}
               </div>
@@ -196,7 +202,7 @@ export default function App() {
             <div>
               <strong style={{ fontSize: '13px', color: 'var(--frio)' }}>Frios:</strong>
               <div className="thermal-row">
-                {classificacao.frios.map(n => (
+                {friosSorted.map(n => (
                   <span key={n} className="badge badge-frio">{pad(n)}</span>
                 ))}
               </div>
@@ -218,7 +224,12 @@ export default function App() {
           </div>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
             Modo atual: <strong style={{ color: 'var(--accent)' }}>{mode === 'incluir' ? 'Incluir' : 'Excluir'}</strong>
-            <InfoIcon text={mode === 'incluir' ? 'Dezenas marcadas como Incluir devem aparecer obrigatoriamente em todos os jogos gerados. Uma dezena nao pode estar simultaneamente em Incluir e Excluir.' : 'Dezenas marcadas como Excluir nao devem aparecer em nenhum jogo gerado. Uma dezena nao pode estar simultaneamente em Incluir e Excluir.'} />
+            <InfoIcon>
+              {mode === 'incluir'
+                ? <>Dezenas marcadas como <strong>Incluir</strong> devem aparecer obrigatoriamente em todos os jogos gerados. Uma dezena não pode estar simultaneamente em <strong>Incluir</strong> e <strong>Excluir</strong>.</>
+                : <>Dezenas marcadas como <strong>Excluir</strong> não devem aparecer em nenhum jogo gerado. Uma dezena não pode estar simultaneamente em <strong>Incluir</strong> e <strong>Excluir</strong>.</>
+              }
+            </InfoIcon>
           </div>
           <div className="volante-grid">
             {Array.from({ length: 25 }, (_, i) => i + 1).map(num => {
@@ -260,31 +271,39 @@ export default function App() {
             </div>
           </div>
           <button className="btn btn-secondary btn-sm" style={{ marginTop: '12px', width: '100%' }} onClick={limparSelecao}>
-            Limpar Selecao
+            Limpar Seleção
           </button>
         </div>
 
         <div className="card">
           <h2>Painel de Controle</h2>
           <div className="form-group">
-            <label>Estrategia <InfoIcon text="Define como o sistema pondera a selecao de dezenas. Mista combina frequencia e atraso. Quentes prioriza as mais sorteadas. Frios prioriza as mais atrasadas. Equilibrada busca dezenas proximas a media historica." /></label>
+            <label>Estratégia <InfoIcon>
+              <strong>Mista</strong> combina frequência e atraso. <strong>Quentes</strong> prioriza as mais sorteadas. <strong>Frios</strong> prioriza as mais atrasadas. <strong>Equilibrada</strong> busca dezenas próximas da média histórica.
+            </InfoIcon></label>
             <select value={estrategia} onChange={e => setEstrategia(e.target.value)}>
               <option value="mista">Mista (Freq + Atraso)</option>
               <option value="quentes">Quentes (Mais sorteadas)</option>
               <option value="frios">Frios (Mais atrasadas)</option>
-              <option value="equilibrada">Equilibrada (Proximas da media)</option>
+              <option value="equilibrada">Equilibrada (Próximas da média)</option>
             </select>
           </div>
           <div className="form-group">
-            <label>Dezenas por jogo: <strong style={{ color: 'var(--accent)' }}>{dezenas}</strong> <InfoIcon text="Quantidade de dezenas em cada jogo gerado. Na Lotofacil, o volante aceita de 15 a 20 dezenas por aposta." /></label>
+            <label>Dezenas por jogo: <strong style={{ color: 'var(--accent)' }}>{dezenas}</strong> <InfoIcon>
+              Quantidade de dezenas em cada jogo gerado. Na Lotofácil, o volante aceita de <strong>15 a 20 dezenas</strong> por aposta.
+            </InfoIcon></label>
             <input type="range" min="15" max="20" value={dezenas} onChange={e => setDezenas(parseInt(e.target.value, 10))} />
           </div>
           <div className="form-group">
-            <label>Quantidade de jogos: <strong style={{ color: 'var(--accent)' }}>{quantidade}</strong> <InfoIcon text="Numero de combinacoes a serem geradas no lote atual. Aceita de 1 a 300 jogos por geracao." /></label>
+            <label>Quantidade de jogos: <strong style={{ color: 'var(--accent)' }}>{quantidade}</strong> <InfoIcon>
+              Número de combinações a serem geradas no lote atual. Aceita de <strong>1 a 300 jogos</strong> por geração.
+            </InfoIcon></label>
             <input type="range" min="1" max="300" value={quantidade} onChange={e => setQuantidade(parseInt(e.target.value, 10))} />
           </div>
           <div className="form-group">
-            <label>Janela de analise: <strong style={{ color: 'var(--accent)' }}>{janela}</strong> concursos <InfoIcon text="Numero de concursos recentes usados para calcular as estatisticas. Janelas menores capturam tendencias recentes; maiores suavizam anomalias. Aceita de 5 a 50 concursos." /></label>
+            <label>Janela de análise: <strong style={{ color: 'var(--accent)' }}>{janela}</strong> concursos <InfoIcon>
+              Número de concursos recentes usados para calcular as estatísticas. Janelas menores capturam tendências recentes; maiores suavizam anomalias. Aceita de <strong>5 a 50 concursos</strong>.
+            </InfoIcon></label>
             <input type="range" min="5" max="50" value={janela} onChange={e => setJanela(parseInt(e.target.value, 10))} />
           </div>
           <button className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }} onClick={gerarJogos} disabled={loadingJogos}>
@@ -295,7 +314,7 @@ export default function App() {
 
       {stats?.ultimos_sorteios && (
         <div className="card" style={{ marginTop: '16px' }}>
-          <h2>Ultimos Sorteios</h2>
+          <h2>Últimos Sorteios</h2>
           {stats.ultimos_sorteios.map(s => (
             <div key={s.concurso} style={{ marginBottom: '10px' }}>
               <strong style={{ fontSize: '13px' }}>Concurso {s.concurso}</strong>
