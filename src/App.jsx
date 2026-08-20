@@ -67,18 +67,18 @@ function exportarPDF(jogos, dezenas, estrategia, janela, incArr, excArr) {
   const hora = new Date().toLocaleTimeString('pt-BR')
   const estrat = getStrategyName(estrategia)
   const estratExp = getStrategyExplanation(estrategia)
-  const dezenasMini = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#a855f7;color:#170d26;font-size:8px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
-  const dezenasVerde = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#00ff66;color:#170d26;font-size:8px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
-  const dezenasVermelho = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#ff1744;color:#fff;font-size:8px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
+  const dezenasMini = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#a855f7;color:#170d26;font-size:10px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
+  const dezenasVerde = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#00ff66;color:#170d26;font-size:10px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
+  const dezenasVermelho = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#ff1744;color:#fff;font-size:10px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
   let selecaoHtml = ''
   if (incArr.length > 0 || excArr.length > 0) {
     let incHtml = ''
     let excHtml = ''
     if (incArr.length > 0) {
-      incHtml = `<div style="margin-bottom:6px;"><span style="color:#00ff66;font-size:11px;font-weight:700;">Incluidas:</span> ${dezenasVerde(incArr)}</div>`
+      incHtml = `<div style="margin-bottom:6px;"><span style="color:#00ff66;font-size:12px;font-weight:700;">Incluidas:</span> ${dezenasVerde(incArr)}</div>`
     }
     if (excArr.length > 0) {
-      excHtml = `<div><span style="color:#ff1744;font-size:11px;font-weight:700;">Excluidas:</span> ${dezenasVermelho(excArr)}</div>`
+      excHtml = `<div><span style="color:#ff1744;font-size:12px;font-weight:700;">Excluidas:</span> ${dezenasVermelho(excArr)}</div>`
     }
     selecaoHtml = `<div class="selecao-box">${incHtml}${excHtml}</div>`
   }
@@ -95,31 +95,49 @@ function exportarPDF(jogos, dezenas, estrategia, janela, incArr, excArr) {
   }).join('')
   const win = window.open('', '_blank')
   win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Loto Rico - Jogos</title><style>
-  @page{margin:0.4cm;}
+  @page{margin:0.5cm;}
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:auto;}
-  body{font-family:'Inter',Calibri,system-ui,sans-serif;background:#170d26;color:#e9d5ff;padding:16px;font-size:12px;}
+  body{font-family:'Inter',Calibri,system-ui,sans-serif;background:#170d26;color:#e9d5ff;padding:16px;font-size:13px;}
   .header{text-align:center;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #a855f7;}
-  .header h1{font-size:22px;font-weight:800;color:#a855f7;margin-bottom:2px;}
-  .header .sub{color:#b794d4;font-size:12px;}
-  .badge{display:inline-block;padding:3px 14px;border-radius:10px;background:rgba(168,85,247,0.18);border:1px solid #a855f7;color:#a855f7;font-size:14px;font-weight:800;margin-bottom:8px;}
-  .info-card{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:10px;margin-bottom:10px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+  .header h1{font-size:24px;font-weight:800;color:#a855f7;margin-bottom:2px;}
+  .header .sub{color:#b794d4;font-size:13px;}
+  .badge{display:inline-block;padding:4px 16px;border-radius:10px;background:rgba(168,85,247,0.18);border:1px solid #a855f7;color:#a855f7;font-size:15px;font-weight:800;margin-bottom:8px;}
+  .info-card{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
   .info-item{text-align:center;}
-  .info-item .label{font-size:9px;color:#b794d4;text-transform:uppercase;letter-spacing:0.05em;}
-  .info-item .val{font-size:13px;font-weight:700;color:#a855f7;}
-  .selecao-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:10px;margin-bottom:10px;display:flex;flex-direction:column;gap:2px;}
-  .strategy-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:10px;margin-bottom:12px;}
-  .strategy-box .stitle{color:#a855f7;font-weight:700;font-size:12px;margin-bottom:4px;}
-  .strategy-box .stext{color:#b794d4;font-size:10px;line-height:1.4;}
-  .jogo-title{font-size:13px;font-weight:700;color:#a855f7;margin-bottom:6px;}
-  .jogo-row{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:4px 8px;margin-bottom:2px;display:flex;align-items:center;gap:6px;}
-  .jogo-id{font-size:10px;font-weight:700;color:#b794d4;min-width:24px;}
-  .dezenas-block{display:flex;flex-wrap:wrap;gap:1px;flex:0 1 auto;}
-  .jogo-stats{margin-left:auto;font-size:10px;color:#b794d4;white-space:nowrap;}
+  .info-item .label{font-size:10px;color:#b794d4;text-transform:uppercase;letter-spacing:0.05em;}
+  .info-item .val{font-size:14px;font-weight:700;color:#a855f7;}
+  .selecao-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:4px;}
+  .strategy-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:14px;}
+  .strategy-box .stitle{color:#a855f7;font-weight:700;font-size:13px;margin-bottom:4px;}
+  .strategy-box .stext{color:#b794d4;font-size:11px;line-height:1.5;}
+  .jogo-title{font-size:14px;font-weight:700;color:#a855f7;margin-bottom:8px;}
+  .jogo-row{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:8px 10px;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+  .jogo-id{font-size:12px;font-weight:700;color:#b794d4;min-width:28px;}
+  .dezenas-block{display:flex;flex-wrap:wrap;gap:2px;flex:0 1 auto;}
+  .jogo-stats{margin-left:auto;font-size:11px;color:#b794d4;white-space:nowrap;}
   .jogo-stats strong{color:#a855f7;}
-  .footer{margin-top:8px;text-align:center;font-size:9px;color:#b794d4;padding-top:6px;border-top:1px solid #3d2854;}
+  .footer{margin-top:10px;text-align:center;font-size:10px;color:#b794d4;padding-top:8px;border-top:1px solid #3d2854;}
   .page-break{page-break-before:always;}
-  @media print{body{padding:8px;}.header{margin-bottom:8px;padding-bottom:6px;}.info-card,.strategy-box,.selecao-box{padding:6px;margin-bottom:8px;}.jogo-row{padding:3px 6px;margin-bottom:1px;}.footer{margin-top:4px;padding-top:4px;}}
+  @media print{
+    body{padding:10px;font-size:14px;}
+    .header{margin-bottom:12px;padding-bottom:10px;}
+    .header h1{font-size:28px;}
+    .header .sub{font-size:14px;}
+    .badge{font-size:17px;padding:5px 18px;margin-bottom:10px;}
+    .info-card{padding:14px;margin-bottom:12px;}
+    .info-item .label{font-size:11px;}
+    .info-item .val{font-size:16px;}
+    .selecao-box{padding:14px;margin-bottom:12px;}
+    .strategy-box{padding:14px;margin-bottom:14px;}
+    .strategy-box .stitle{font-size:14px;}
+    .strategy-box .stext{font-size:12px;line-height:1.6;}
+    .jogo-title{font-size:16px;margin-bottom:10px;}
+    .jogo-row{padding:10px 12px;margin-bottom:5px;}
+    .jogo-id{font-size:13px;min-width:32px;}
+    .jogo-stats{font-size:12px;}
+    .footer{margin-top:8px;padding-top:6px;font-size:11px;}
+  }
   </style></head><body>
   <div class="header">
     <div class="badge">Lotofácil</div>
