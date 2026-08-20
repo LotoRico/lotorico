@@ -51,8 +51,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', system-u
 .badge-morno { background: rgba(250,204,21,0.2); color: var(--morno); }
 .badge-frio { background: rgba(96,165,250,0.2); color: var(--frio); }
 /* Badges selecionados na lista termica */
-.badge-incluir { border-color: var(--success) !important; box-shadow: 0 0 8px rgba(34,197,94,0.6); background: rgba(34,197,94,0.25) !important; color: #bbf7d0 !important; }
-.badge-excluir { border-color: var(--danger) !important; box-shadow: 0 0 8px rgba(255,23,68,0.6); background: rgba(255,23,68,0.25) !important; color: #ffcdd2 !important; }
+.badge-incluir { border-color: #00ff66 !important; box-shadow: 0 0 8px rgba(0,255,102,0.6); background: rgba(34,197,94,0.25) !important; color: #bbf7d0 !important; }
+.badge-excluir { border-color: #ff1744 !important; box-shadow: 0 0 8px rgba(255,23,68,0.6); background: rgba(255,23,68,0.25) !important; color: #ffcdd2 !important; }
 /* Main grid */
 .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
 @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
@@ -63,14 +63,14 @@ body { background: var(--bg); color: var(--text); font-family: 'Inter', system-u
 .volante-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-width: 360px; margin: 0 auto; }
 .volante-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; border: 2px solid transparent; border-radius: 8px; cursor: pointer; transition: all 0.12s; position: relative; }
 .volante-cell:hover { transform: scale(1.08); }
-/* Thermal no volante - cores intensas */
-.thermal-quente { background: rgba(244,63,94,0.35) !important; color: #ffd0d8 !important; border-color: rgba(244,63,94,0.6) !important; box-shadow: inset 0 0 8px rgba(244,63,94,0.2); }
-.thermal-morno { background: rgba(250,204,21,0.25) !important; color: #fef3c7 !important; border-color: rgba(250,204,21,0.5) !important; box-shadow: inset 0 0 8px rgba(250,204,21,0.15); }
-.thermal-frio { background: rgba(96,165,250,0.25) !important; color: #dbeafe !important; border-color: rgba(96,165,250,0.5) !important; box-shadow: inset 0 0 8px rgba(96,165,250,0.15); }
-/* Incluir - mantem o fundo termico, borda verde radioativa + glow forte */
-.cell-incluir { border-color: #00ff66 !important; box-shadow: 0 0 14px rgba(0,255,102,0.7), inset 0 0 6px rgba(0,255,102,0.25) !important; }
-/* Excluir - mantem o fundo termico, borda vermelho radioativo + glow forte */
-.cell-excluir { border-color: #ff1744 !important; box-shadow: 0 0 14px rgba(255,23,68,0.7), inset 0 0 6px rgba(255,23,68,0.25) !important; }
+/* Thermal no volante - um pouco mais escuro para dar contraste com as bordas */
+.thermal-quente { background: rgba(244,63,94,0.3) !important; color: #ffd0d8 !important; border-color: rgba(244,63,94,0.5) !important; box-shadow: inset 0 0 8px rgba(244,63,94,0.2); }
+.thermal-morno { background: rgba(250,204,21,0.22) !important; color: #fef3c7 !important; border-color: rgba(250,204,21,0.4) !important; box-shadow: inset 0 0 8px rgba(250,204,21,0.15); }
+.thermal-frio { background: rgba(96,165,250,0.22) !important; color: #dbeafe !important; border-color: rgba(96,165,250,0.4) !important; box-shadow: inset 0 0 8px rgba(96,165,250,0.15); }
+/* Incluir - anel branco + borda verde radioativa */
+.cell-incluir { border-color: #00ff66 !important; border-width: 3px !important; outline: 2px solid rgba(255,255,255,0.9) !important; outline-offset: -5px !important; box-shadow: 0 0 14px rgba(0,255,102,0.7) !important; }
+/* Excluir - anel branco + borda vermelho radioativo */
+.cell-excluir { border-color: #ff1744 !important; border-width: 3px !important; outline: 2px solid rgba(255,255,255,0.9) !important; outline-offset: -5px !important; box-shadow: 0 0 14px rgba(255,23,68,0.7) !important; }
 /* Mode toggle */
 .mode-toggle { display: flex; gap: 4px; margin: 12px 0; background: var(--bg); border-radius: 6px; padding: 3px; }
 .mode-btn { flex: 1; padding: 6px; border: none; border-radius: 4px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-muted); transition: all 0.15s; }
