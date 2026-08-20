@@ -62,12 +62,26 @@ function exportarCSV(jogos, dezenas, estrategia, janela) {
   URL.revokeObjectURL(url)
 }
 
-function exportarPDF(jogos, dezenas, estrategia, janela) {
+function exportarPDF(jogos, dezenas, estrategia, janela, incArr, excArr) {
   const data = new Date().toLocaleDateString('pt-BR')
   const hora = new Date().toLocaleTimeString('pt-BR')
   const estrat = getStrategyName(estrategia)
   const estratExp = getStrategyExplanation(estrategia)
   const dezenasMini = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#a855f7;color:#170d26;font-size:8px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
+  const dezenasVerde = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#00ff66;color:#170d26;font-size:8px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
+  const dezenasVermelho = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#ff1744;color:#fff;font-size:8px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
+  let selecaoHtml = ''
+  if (incArr.length > 0 || excArr.length > 0) {
+    let incHtml = ''
+    let excHtml = ''
+    if (incArr.length > 0) {
+      incHtml = `<div style="margin-bottom:6px;"><span style="color:#00ff66;font-size:11px;font-weight:700;">Incluidas:</span> ${dezenasVerde(incArr)}</div>`
+    }
+    if (excArr.length > 0) {
+      excHtml = `<div><span style="color:#ff1744;font-size:11px;font-weight:700;">Excluidas:</span> ${dezenasVermelho(excArr)}</div>`
+    }
+    selecaoHtml = `<div class="selecao-box">${incHtml}${excHtml}</div>`
+  }
   const jogosHtml = jogos.map((j, idx) => {
     let pageBreak = ''
     if (idx === 20) { pageBreak = ' page-break' }
@@ -91,6 +105,7 @@ function exportarPDF(jogos, dezenas, estrategia, janela) {
   .info-item{text-align:center;}
   .info-item .label{font-size:9px;color:#b794d4;text-transform:uppercase;letter-spacing:0.05em;}
   .info-item .val{font-size:13px;font-weight:700;color:#a855f7;}
+  .selecao-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:10px;margin-bottom:12px;display:flex;flex-direction:column;gap:2px;}
   .strategy-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:10px;margin-bottom:14px;}
   .strategy-box .stitle{color:#a855f7;font-weight:700;font-size:12px;margin-bottom:4px;}
   .strategy-box .stext{color:#b794d4;font-size:10px;line-height:1.4;}
@@ -102,7 +117,7 @@ function exportarPDF(jogos, dezenas, estrategia, janela) {
   .jogo-stats strong{color:#a855f7;}
   .footer{margin-top:16px;text-align:center;font-size:9px;color:#b794d4;padding-top:10px;border-top:1px solid #3d2854;}
   .page-break{page-break-before:always;}
-  @media print{body{padding:12px;}.header{margin-bottom:10px;padding-bottom:8px;}.info-card,.strategy-box{padding:8px;}.jogo-row{padding:4px 6px;margin-bottom:2px;}}
+  @media print{body{padding:12px;}.header{margin-bottom:10px;padding-bottom:8px;}.info-card,.strategy-box,.selecao-box{padding:8px;}.jogo-row{padding:4px 6px;margin-bottom:2px;}}
   </style></head><body>
   <div class="header">
     <div class="badge">Lotofácil</div>
@@ -117,6 +132,7 @@ function exportarPDF(jogos, dezenas, estrategia, janela) {
     <div class="info-item"><div class="label">Dezenas</div><div class="val">${dezenas}</div></div>
     <div class="info-item"><div class="label">Jogos</div><div class="val">${jogos.length}</div></div>
   </div>
+  ${selecaoHtml}
   <div class="strategy-box">
     <div class="stitle">Resumo da Estratégia: ${estrat}</div>
     <div class="stext">${estratExp}</div>
@@ -405,7 +421,7 @@ export default function App() {
             <div className="export-buttons">
               <button className="btn btn-success btn-sm" onClick={() => exportarTxt(jogos, dezenas)}>TXT</button>
               <InfoIcon><strong>TXT</strong>: Formato da extensao Loto Rico para Chrome. Permite o upload dos jogos no site da Caixa Economica Federal.</InfoIcon>
-              <button className="btn btn-secondary btn-sm" onClick={() => exportarPDF(jogos, dezenas, estrategia, janela)}>PDF</button>
+              <button className="btn btn-secondary btn-sm" onClick={() => exportarPDF(jogos, dezenas, estrategia, janela, incluir, excluir)}>PDF</button>
               <InfoIcon><strong>PDF</strong>: Documento formatado com todas as informacoes dos jogos, estrategia utilizada e resumo estatistico. Ideal para impressao e arquivo.</InfoIcon>
               <button className="btn btn-secondary btn-sm" onClick={() => exportarCSV(jogos, dezenas, estrategia, janela)}>CSV</button>
               <InfoIcon><strong>CSV</strong>: Planilha com uma dezena por celula, cabecalho com dados da estrategia e informacoes completas. Compativel com Excel e Google Sheets.</InfoIcon>
