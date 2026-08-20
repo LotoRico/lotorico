@@ -149,6 +149,10 @@ export default function App() {
   const [excluir, setExcluir] = useState([])
   const [mode, setMode] = useState('incluir')
 
+  const maxInclusoes = dezenas
+  const maxExclusoes = 25 - dezenas
+  const temSelecao = incluir.length > 0 || excluir.length > 0
+
   async function carregarStats() {
     setLoadingStats(true)
     try {
@@ -160,11 +164,28 @@ export default function App() {
 
   useEffect(() => { carregarStats() }, [janela])
 
+  useEffect(() => {
+    if (incluir.length > dezenas) {
+      setIncluir(incluir.slice(0, dezenas))
+      setErro(`Inclusões ajustadas para ${dezenas} (máximo para ${dezenas} dezenas por jogo).`)
+    }
+    const maxExc = 25 - dezenas
+    if (excluir.length > maxExc) {
+      setExcluir(excluir.slice(0, maxExc))
+      setErro(`Exclusões ajustadas para ${maxExc} (máximo para ${dezenas} dezenas por jogo).`)
+    }
+  }, [dezenas])
+
   function handleVolanteClick(num) {
+    setErro('')
     if (mode === 'incluir') {
       if (incluir.includes(num)) {
         setIncluir(incluir.filter(n => n !== num))
       } else {
+        if (incluir.length >= maxInclusoes) {
+          setErro(`Não é possível incluir mais de ${maxInclusoes} dezenas em jogos de ${dezenas} dezenas. Remova uma inclusão ou aumente as dezenas por jogo.`)
+          return
+        }
         if (excluir.includes(num)) setExcluir(excluir.filter(n => n !== num))
         setIncluir([...incluir, num])
       }
@@ -172,17 +193,35 @@ export default function App() {
       if (excluir.includes(num)) {
         setExcluir(excluir.filter(n => n !== num))
       } else {
+        if (excluir.length >= maxExclusoes) {
+          setErro(`Não é possível excluir mais de ${maxExclusoes} dezenas em jogos de ${dezenas} dezenas. Remova uma exclusão ou reduza as dezenas por jogo.`)
+          return
+        }
         if (incluir.includes(num)) setIncluir(incluir.filter(n => n !== num))
         setExcluir([...excluir, num])
       }
     }
   }
 
-  function limparSelecao() { setIncluir([]); setExcluir([]) }
+  function limparSelecao() { setIncluir([]); setExcluir([]); setErro('') }
 
   async function gerarJogos() {
-    setLoadingJogos(true)
     setErro('')
+    if (incluir.length > maxInclusoes) {
+      setErro(`Você marcou ${incluir.length} inclusões, mas o máximo para ${dezenas} dezenas é ${maxInclusoes}.`)
+      return
+    }
+    if (excluir.length > maxExclusoes) {
+      setErro(`Você marcou ${excluir.length} exclusões, mas o máximo para ${dezenas} dezenas é ${maxExclusoes}.`)
+      return
+    }
+    const disponiveis = 25 - incluir.length - excluir.length
+    const necessarias = dezenas - incluir.length
+    if (necessarias > disponiveis) {
+      setErro(`Dezenas insuficientes: você precisa de ${necessarias} dezenas aleatórias, mas só há ${disponiveis} disponíveis (25 - ${incluir.length} inclusões - ${excluir.length} exclusões).`)
+      return
+    }
+    setLoadingJogos(true)
     try {
       let url = `gerar-jogos?quantidade=${quantidade}&dezenas=${dezenas}&janela=${janela}&estrategia=${estrategia}`
       if (incluir.length) url += `&incluir=${incluir.join(',')}`
@@ -272,15 +311,17 @@ export default function App() {
         <div className="card">
           <h2>Volante Interativo</h2>
           <div className="mode-toggle">
-            <button className={`mode-btn ${mode === 'incluir' ? 'active' : ''}`} onClick={() => setMode('incluir')}>Incluir ({incluir.length})</button>
-            <button className={`mode-btn ${mode === 'excluir' ? 'active' : ''}`} onClick={() => setMode('excluir')}>Excluir ({excluir.length})</button>
+            <button className={`mode-btn ${mode === 'incluir' ? 'active' : ''}`} onClick={() => setMode('incluir')}>Incluir ({incluir.length}/{maxInclusoes})</button>
+            <button className={`mode-btn ${mode === 'excluir' ? 'active' : ''}`} onClick={() => setMode('excluir')}>Excluir ({excluir.length}/{maxExclusoes})</button>
+            <button className="mode-btn" onClick={limparSelecao} disabled={!temSelecao} style={{ flex: '0 0 auto', padding: '6px 14px', color: temSelecao ? 'var(--danger)' : 'var(--text-muted)', fontWeight: 700 }}>Limpar Tudo</button>
           </div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+          <div className="limit-info">Máximo de <strong>{maxInclusoes}</strong> inclusões e <strong>{maxExclusoes}</strong> exclusões para jogos de <strong>{dezenas}</strong> dezenas.</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', marginTop: '6px' }}>
             Modo atual: <strong style={{ color: 'var(--accent)' }}>{mode === 'incluir' ? 'Incluir' : 'Excluir'}</strong>
             <InfoIcon>
               {mode === 'incluir'
-                ? <>Dezenas marcadas como <strong>Incluir</strong> devem aparecer obrigatoriamente em todos os jogos gerados. Uma dezena não pode estar simultaneamente em <strong>Incluir</strong> e <strong>Excluir</strong>.</>
-                : <>Dezenas marcadas como <strong>Excluir</strong> não devem aparecer em nenhum jogo gerado. Uma dezena não pode estar simultaneamente em <strong>Incluir</strong> e <strong>Excluir</strong>.</>
+                ? <>Dezenas marcadas como <strong>Incluir</strong> devem aparecer obrigatoriamente em todos os jogos gerados. Uma dezena não pode estar simultaneamente em <strong>Incluir</strong> e <strong>Excluir</strong>. O máximo de inclusões é igual ao número de dezenas por jogo.</>
+                : <>Dezenas marcadas como <strong>Excluir</strong> não devem aparecer em nenhum jogo gerado. Uma dezena não pode estar simultaneamente em <strong>Incluir</strong> e <strong>Excluir</strong>. O máximo de exclusões é 25 menos o número de dezenas por jogo.</>
               }
             </InfoIcon>
           </div>
@@ -306,7 +347,6 @@ export default function App() {
               {excluir.length === 0 ? <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Nenhuma</span> : excluir.sort((a, b) => a - b).map(n => (<span key={n} className="tag tag-excluir">{pad(n)}</span>))}
             </div>
           </div>
-          <button className="btn btn-secondary btn-sm" style={{ marginTop: '12px', width: '100%' }} onClick={limparSelecao}>Limpar Seleção</button>
         </div>
 
         <div className="card">
@@ -326,7 +366,7 @@ export default function App() {
             </select>
           </div>
           <div className="form-group">
-            <label>Dezenas por jogo: <strong style={{ color: 'var(--accent)' }}>{dezenas}</strong> <InfoIcon>Quantidade de dezenas em cada jogo gerado. Na Lotofácil, o volante aceita de <strong>15 a 20 dezenas</strong> por aposta.</InfoIcon></label>
+            <label>Dezenas por jogo: <strong style={{ color: 'var(--accent)' }}>{dezenas}</strong> <InfoIcon>Quantidade de dezenas em cada jogo gerado. Na Lotofácil, o volante aceita de <strong>15 a 20 dezenas</strong> por aposta. Alterar este valor recalcula os limites de inclusões e exclusões automaticamente.</InfoIcon></label>
             <input type="range" min="15" max="20" value={dezenas} onChange={e => setDezenas(parseInt(e.target.value, 10))} />
           </div>
           <div className="form-group">
