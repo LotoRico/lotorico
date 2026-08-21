@@ -9,7 +9,7 @@ function setHeaders(res) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
 }
 
-const MAX_POR_LOTE = 5;
+const MAX_POR_LOTE = 5000;
 
 module.exports = async (req, res) => {
   setHeaders(res);
@@ -88,6 +88,13 @@ module.exports = async (req, res) => {
       }
     }
 
+    if (importados.length === 0 && erros.length > 0) {
+      return res.status(500).json({
+        sucesso: false,
+        mensagem: `Falha ao importar: ${erros[0].erro}`
+      });
+    }
+
     const aindaFaltam = faltam - importados.length;
 
     return res.status(200).json({
@@ -97,9 +104,9 @@ module.exports = async (req, res) => {
       ultimo_caixa: ultimoCaixa,
       total_faltantes: faltam,
       novos: importados.length,
-      concursos_importados: importados,
+      concursos_importados: importados.length <= 20 ? importados : `${importados[0]}...${importados[importados.length - 1]}`,
       ainda_faltam: aindaFaltam > 0 ? aindaFaltam : 0,
-      erros: erros.length > 0 ? erros : undefined
+      erros: erros.length > 0 ? erros.slice(0, 10) : undefined
     });
 
   } catch (error) {
