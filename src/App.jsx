@@ -464,7 +464,7 @@ export default function App() {
           {stats.ultimos_sorteios.map(s => (
             <div key={s.concurso} style={{ marginBottom: '10px' }}>
               <strong style={{ fontSize: '13px' }}>Concurso {s.concurso}</strong>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>{s.data_sorteio}</span>
+              {s.data_sorteio && <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginLeft: '8px' }}>{s.data_sorteio}</span>}
               <div className="ultimos-row">
                 {s.dezenas.map((d, i) => (<span key={i} className="ultimo-badge">{pad(d)}</span>))}
               </div>
