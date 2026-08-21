@@ -1,57 +1,11 @@
 // api/_lib/caixa-client.js
-const https = require('https');
 
-const CAIXA_HOST = 'servicebus2.caixa.gov.br';
-const CAIXA_PATH = '/portaldeloterias/api/lotofacil';
-
-function httpsGet(path) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: CAIXA_HOST,
-      path: path,
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'pt-BR,pt;q=0.9',
-        'Referer': 'https://loterias.caixa.gov.br/Paginas/Lotofacil.aspx'
-      },
-      timeout: 10000
-    };
-
-    const req = https.request(options, (resp) => {
-      let data = '';
-      const encoding = resp.headers['content-encoding'];
-      let stream = resp;
-
-      if (encoding === 'br') {
-        const zlib = require('zlib');
-        stream = resp.pipe(zlib.createBrotliDecompress());
-      } else if (encoding === 'gzip') {
-        const zlib = require('zlib');
-        stream = resp.pipe(zlib.createGunzip());
-      }
-
-      stream.on('data', chunk => data += chunk);
-      stream.on('end', () => {
-        if (resp.statusCode !== 200) {
-          reject(new Error(`API retornou ${resp.statusCode}`));
-          return;
-        }
-        try {
-          resolve(JSON.parse(data));
-        } catch (e) {
-          reject(new Error('Resposta não é JSON válido'));
-        }
-      });
-      stream.on('error', reject);
-    });
-
-    req.on('error', reject);
-    req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
-    req.end();
-  });
-}
+const CAIXA_BASE = 'https://servicebus2.caixa.gov.br/portaldeloterias/api/lotofacil';
+const PROXIES = [
+  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`
+];
 
 function parseDataCaixa(dataStr) {
   if (!dataStr) return null;
@@ -71,13 +25,60 @@ function safeJson(val) {
   }
 }
 
+async function httpsGet(url, useProxy) {
+  const finalUrl = useProxy ? PROXIES[useProxy - 1](url) : url;
+  const headers = useProxy
+    ? { 'Accept': 'application/json' }
+    : {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'pt-BR,pt;q=0.9',
+        'Referer': 'https://loterias.caixa.gov.br/Paginas/Lotofacil.aspx'
+      };
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+
+  try {
+    const resp = await fetch(finalUrl, { headers, signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!resp.ok) {
+      throw new Error(`HTTP ${resp.status}`);
+    }
+
+    const text = await resp.text();
+    return JSON.parse(text);
+  } catch (err) {
+    clearTimeout(timeout);
+    throw err;
+  }
+}
+
 async function fetchConcurso(concurso) {
-  const path = concurso
-    ? `${CAIXA_PATH}/${concurso}`
-    : CAIXA_PATH;
+  const url = concurso ? `${CAIXA_BASE}/${concurso}` : CAIXA_BASE;
+  const tentativas = [
+    { label: 'direto', useProxy: 0 },
+    { label: 'allorigins', useProxy: 1 },
+    { label: 'codetabs', useProxy: 2 },
+    { label: 'corsproxy', useProxy: 3 }
+  ];
 
-  const resultado = await httpsGet(path);
+  let ultimoErro = null;
 
+  for (const t of tentativas) {
+    try {
+      const resultado = await httpsGet(url, t.useProxy);
+      return normalizarResultado(resultado);
+    } catch (err) {
+      ultimoErro = `${t.label}: ${err.message}`;
+    }
+  }
+
+  throw new Error(`Todas as fontes falharam. Último erro: ${ultimoErro}`);
+}
+
+function normalizarResultado(resultado) {
   const dezenasOrdem = (resultado.dezenasSorteadasOrdemSorteio || [])
     .map(d => parseInt(d, 10));
 
