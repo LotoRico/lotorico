@@ -1,8 +1,8 @@
 // api/importar-sorteios.js
-const pool = require('./_lib/db');
+
+const { pool, obterConfigLoteria, obterTabelaResultados } = require('./_lib/db');
 
 // ===================== UTILITÁRIOS =====================
-
 function setHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -10,7 +10,6 @@ function setHeaders(res) {
 }
 
 // ===================== INTERFACE HTML =====================
-
 function renderHTML() {
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -131,7 +130,7 @@ function renderHTML() {
   <script>
     async function loadStatus() {
       try {
-        const resp = await fetch('/api/importar-sorteios', { headers: { 'Accept': 'application/json' } });
+        const resp = await fetch('/api/importar-sorteios?loteria=lotofacil', { headers: { 'Accept': 'application/json' } });
         const data = await resp.json();
         const el = document.getElementById('status-content');
         if (data.total !== undefined) {
@@ -147,11 +146,9 @@ function renderHTML() {
         document.getElementById('status-content').innerHTML = '<p style="color: #ef4444; font-size: 13px;">Erro de conexão.</p>';
       }
     }
-
     const fileInput = document.getElementById('file-input');
     const btnUpload = document.getElementById('btn-upload');
     let selectedFile = null;
-
     fileInput.addEventListener('change', (e) => {
       selectedFile = e.target.files[0];
       if (selectedFile) {
@@ -159,19 +156,17 @@ function renderHTML() {
         btnUpload.disabled = false;
       }
     });
-
     btnUpload.addEventListener('click', async () => {
       if (!selectedFile) return;
       btnUpload.disabled = true;
       btnUpload.textContent = 'Importando...';
       const result = document.getElementById('result');
       result.style.display = 'none';
-
       const formData = new FormData();
       formData.append('file', selectedFile);
-
+      formData.append('loteria', 'lotofacil');
       try {
-        const resp = await fetch('/api/importar-sorteios', { method: 'POST', body: formData });
+        const resp = await fetch('/api/importar-sorteios?loteria=lotofacil', { method: 'POST', body: formData });
         const data = await resp.json();
         result.style.display = 'block';
         if (data.success || data.sucesso) {
@@ -190,11 +185,9 @@ function renderHTML() {
       btnUpload.disabled = false;
       btnUpload.textContent = 'Importar Dados';
     });
-
     function toggleTheme() {
       document.body.style.backgroundColor = document.body.style.backgroundColor === 'rgb(248, 250, 252)' ? '#0f172a' : '#f8fafc';
     }
-
     loadStatus();
   </script>
 </body>
@@ -202,8 +195,14 @@ function renderHTML() {
 }
 
 // ===================== PARSER XLSX =====================
-
-function parsePlanilhaCaixa(workbook) {
+/**
+ * Faz o parse da planilha da Caixa e extrai concurso, data e dezenas.
+ * Usa a config da loteria para saber o range de dezenas e coluna inicial.
+ * @param {Object} workbook - workbook XLSX
+ * @param {Object} config - config da loteria (importar_col_inicio, dezena_min, dezena_max, total_dezenas, min_selecao)
+ * @returns {Array} [{ concurso, data, dezenas: [int, ...] }]
+ */
+function parsePlanilhaCaixa(workbook, config) {
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
 
@@ -223,12 +222,14 @@ function parsePlanilhaCaixa(workbook) {
   const colMap = {};
   headers.forEach((h, idx) => {
     if (h.includes('concurso')) colMap.concurso = idx;
-    if (h.includes('data') && h.includes('sorteio') || h === 'data sorteio') colMap.data = idx;
-    if (h.match(/^bola\s*1$/) || h === 'dezena 1' || h === 'd1') colMap.bola1 = idx;
+    if ((h.includes('data') && h.includes('sorteio')) || h === 'data sorteio') colMap.data = idx;
   });
 
-  // Se não mapeou bolas por nome, assume que vêm após a data
+  const { dezena_min, dezena_max, min_selecao, importar_col_inicio } = config;
+  const totalDezenasSorteadas = min_selecao; // Lotofácil: 15 dezenas sorteadas
+
   const dados = [];
+
   for (let i = headerRow + 1; i < rows.length; i++) {
     const row = rows[i];
     if (!row || !row[0]) continue;
@@ -236,31 +237,50 @@ function parsePlanilhaCaixa(workbook) {
     const concurso = parseInt(row[colMap.concurso || 0], 10);
     if (isNaN(concurso)) continue;
 
-    // Extrair 15 dezenas: procura na linha valores 1-25
+    // Extrair dezenas: usa importar_col_inicio como guia, mas também faz scan flexível
     const dezenas = [];
-    for (let j = 0; j < row.length; j++) {
+    const colInicial = importar_col_inicio || 2;
+
+    // Primeiro tenta ler colunas contíguas a partir de colInicial
+    for (let j = colInicial; j < row.length && dezenas.length < totalDezenasSorteadas; j++) {
       if (j === (colMap.concurso || 0) || j === colMap.data) continue;
       const val = parseInt(String(row[j]).replace(/\D/g, ''), 10);
-      if (val >= 1 && val <= 25 && dezenas.length < 15 && !dezenas.includes(val)) {
+      if (val >= dezena_min && val <= dezena_max && !dezenas.includes(val)) {
         dezenas.push(val);
       }
     }
 
-    if (dezenas.length === 15) {
+    // Se não encontrou todas, faz scan em toda a linha
+    if (dezenas.length < totalDezenasSorteadas) {
+      dezenas.length = 0;
+      for (let j = 0; j < row.length; j++) {
+        if (j === (colMap.concurso || 0) || j === colMap.data) continue;
+        const val = parseInt(String(row[j]).replace(/\D/g, ''), 10);
+        if (val >= dezena_min && val <= dezena_max && !dezenas.includes(val)) {
+          dezenas.push(val);
+        }
+        if (dezenas.length >= totalDezenasSorteadas) break;
+      }
+    }
+
+    if (dezenas.length === totalDezenasSorteadas) {
       dezenas.sort((a, b) => a - b);
+
       let dataSorteio = null;
       if (colMap.data !== undefined) {
         const rawDate = String(row[colMap.data]).trim();
         if (rawDate.includes('/')) {
           const [dia, mes, ano] = rawDate.split('/');
           dataSorteio = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+        } else if (rawDate.includes('-')) {
+          dataSorteio = rawDate.split('T')[0];
         }
       }
 
       dados.push({
         concurso,
-        data_sorteio: dataSorteio,
-        bolas: dezenas
+        data: dataSorteio,
+        dezenas: JSON.stringify(dezenas)
       });
     }
   }
@@ -269,110 +289,124 @@ function parsePlanilhaCaixa(workbook) {
 }
 
 // ===================== HANDLER =====================
-
 module.exports = async (req, res) => {
   setHeaders(res);
-
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
 
-  // GET — interface HTML ou status JSON
-  if (req.method === 'GET') {
-    const accept = req.headers.accept || '';
-    if (accept.includes('application/json')) {
-      try {
-        const [rows] = await pool.query(
-          'SELECT COUNT(*) as total, MAX(concurso) as ultimo_concurso, MAX(data_sorteio) as ultima_data FROM sorteios'
-        );
-        const r = rows[0];
-        return res.status(200).json({
-          total: r.total,
-          ultimo_concurso: r.ultimo_concurso,
-          ultima_data: r.ultima_data ? (r.ultima_data instanceof Date ? r.ultima_data.toISOString().split('T')[0] : String(r.ultima_data).split('T')[0]) : null
-        });
-      } catch (error) {
-        return res.status(500).json({ error: error.message });
-      }
+  const slug = req.query.loteria || 'lotofacil';
+
+  try {
+    const config = await obterConfigLoteria(slug);
+    if (!config) {
+      return res.status(404).json({ success: false, error: `Loteria '${slug}' não encontrada ou inativa.` });
     }
-    // Retorna interface HTML
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.status(200).send(renderHTML());
-  }
+    const tabela = obterTabelaResultados(slug);
 
-  // POST — importar XLSX
-  if (req.method === 'POST') {
-    try {
-      const XLSX = require('xlsx');
-
-      // Processar body (Vercel envia body como Buffer para multipart)
-      if (!req.body) {
-        return res.status(400).json({ success: false, error: 'Nenhum arquivo enviado.' });
-      }
-
-      let buffer;
-      if (Buffer.isBuffer(req.body)) {
-        buffer = req.body;
-      } else if (typeof req.body === 'string') {
-        buffer = Buffer.from(req.body, 'binary');
-      } else {
-        buffer = Buffer.from(JSON.stringify(req.body));
-      }
-
-      const workbook = XLSX.read(buffer, { type: 'buffer' });
-      const dados = parsePlanilhaCaixa(workbook);
-
-      if (dados.length === 0) {
-        return res.status(200).json({
-          success: false,
-          error: 'Nenhuma linha válida encontrada. Verifique o formato do arquivo.'
-        });
-      }
-
-      let importados = 0;
-      for (const d of dados) {
+    // GET — interface HTML ou status JSON
+    if (req.method === 'GET') {
+      const accept = req.headers.accept || '';
+      if (accept.includes('application/json')) {
         try {
-          await pool.execute(
-            `INSERT INTO sorteios (
-              concurso, data_sorteio, bola1, bola2, bola3, bola4, bola5,
-              bola6, bola7, bola8, bola9, bola10, bola11, bola12, bola13, bola14, bola15
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-            ON DUPLICATE KEY UPDATE
-              data_sorteio=VALUES(data_sorteio),
-              bola1=VALUES(bola1), bola2=VALUES(bola2), bola3=VALUES(bola3),
-              bola4=VALUES(bola4), bola5=VALUES(bola5), bola6=VALUES(bola6),
-              bola7=VALUES(bola7), bola8=VALUES(bola8), bola9=VALUES(bola9),
-              bola10=VALUES(bola10), bola11=VALUES(bola11), bola12=VALUES(bola12),
-              bola13=VALUES(bola13), bola14=VALUES(bola14), bola15=VALUES(bola15)`,
-            [
-              d.concurso, d.data_sorteio,
-              ...d.bolas
-            ]
+          const [rows] = await pool.query(
+            `SELECT COUNT(*) as total, MAX(concurso) as ultimo_concurso, MAX(data) as ultima_data FROM ${tabela}`
           );
-          importados++;
-        } catch (insertErr) {
-          // Ignora duplicados
-          if (!insertErr.message.includes('Duplicate')) {
-            console.error(`Erro ao inserir concurso ${d.concurso}: ${insertErr.message}`);
-          }
+          const r = rows[0];
+          return res.status(200).json({
+            loteria: slug,
+            total: r.total,
+            ultimo_concurso: r.ultimo_concurso,
+            ultima_data: r.ultima_data
+              ? (r.ultima_data instanceof Date
+                  ? r.ultima_data.toISOString().split('T')[0]
+                  : String(r.ultima_data).split('T')[0])
+              : null
+          });
+        } catch (error) {
+          return res.status(500).json({ error: error.message });
         }
       }
-
-      return res.status(200).json({
-        success: true,
-        imported: importados,
-        total: dados.length,
-        mensagem: `${importados} de ${dados.length} concursos importados com sucesso.`
-      });
-
-    } catch (error) {
-      console.error('[importar-sorteios] Erro:', error.message);
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Erro interno ao processar o arquivo.'
-      });
+      // Retorna interface HTML
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.status(200).send(renderHTML());
     }
-  }
 
-  return res.status(405).json({ error: 'Método não permitido.' });
+    // POST — importar XLSX
+    if (req.method === 'POST') {
+      try {
+        const XLSX = require('xlsx');
+
+        if (!req.body) {
+          return res.status(400).json({ success: false, error: 'Nenhum arquivo enviado.' });
+        }
+
+        let buffer;
+        if (Buffer.isBuffer(req.body)) {
+          buffer = req.body;
+        } else if (typeof req.body === 'string') {
+          buffer = Buffer.from(req.body, 'binary');
+        } else {
+          buffer = Buffer.from(JSON.stringify(req.body));
+        }
+
+        const workbook = XLSX.read(buffer, { type: 'buffer' });
+        const dados = parsePlanilhaCaixa(workbook, config);
+
+        if (dados.length === 0) {
+          return res.status(200).json({
+            success: false,
+            error: 'Nenhuma linha válida encontrada. Verifique o formato do arquivo.'
+          });
+        }
+
+        let importados = 0;
+        let erros = 0;
+
+        for (const d of dados) {
+          try {
+            await pool.execute(
+              `INSERT INTO ${tabela} (concurso, data, dezenas)
+               VALUES (?, ?, ?)
+               ON DUPLICATE KEY UPDATE
+                 data = VALUES(data),
+                 dezenas = VALUES(dezenas)`,
+              [d.concurso, d.data, d.dezenas]
+            );
+            importados++;
+          } catch (insertErr) {
+            if (!insertErr.message.includes('Duplicate')) {
+              console.error(`Erro ao inserir concurso ${d.concurso}: ${insertErr.message}`);
+            }
+            erros++;
+          }
+        }
+
+        return res.status(200).json({
+          success: true,
+          imported: importados,
+          total: dados.length,
+          erros: erros > 0 ? erros : undefined,
+          loteria: slug,
+          mensagem: `${importados} de ${dados.length} concursos importados com sucesso.`
+        });
+
+      } catch (error) {
+        console.error('[importar-sorteios] Erro:', error.message);
+        return res.status(500).json({
+          success: false,
+          error: error.message || 'Erro interno ao processar o arquivo.'
+        });
+      }
+    }
+
+    return res.status(405).json({ error: 'Método não permitido.' });
+
+  } catch (error) {
+    console.error('[importar-sorteios] Erro:', error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro interno.'
+    });
+  }
 };
