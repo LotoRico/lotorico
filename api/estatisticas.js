@@ -1,20 +1,16 @@
 // api/estatisticas.js
-
 const { pool, obterConfigLoteria, obterTabelaResultados } = require('./_lib/db');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
-
   try {
     const slug = req.query.loteria || 'lotofacil';
     const janela = parseInt(req.query.janela, 10) || 20;
     const config = await obterConfigLoteria(slug);
-
     if (!config) {
       return res.status(404).json({ sucesso: false, erro: `Loteria '${slug}' não encontrada.` });
     }
-
     const tabela = obterTabelaResultados(slug);
     const { dezena_min, dezena_max, min_selecao, max_selecao, total_dezenas,
             linhas_volante, colunas_volante } = config;
@@ -22,7 +18,6 @@ module.exports = async (req, res) => {
     // 1. Total de registros no banco
     const [totalRows] = await pool.query(`SELECT COUNT(*) as total FROM ${tabela}`);
     const totalBanco = totalRows[0].total;
-
     if (totalBanco === 0) {
       return res.status(200).json({
         sucesso: false,
@@ -35,7 +30,6 @@ module.exports = async (req, res) => {
       `SELECT concurso, data, dezenas FROM ${tabela} ORDER BY concurso DESC LIMIT ?`,
       [janela]
     );
-
     if (sorteiosRaw.length === 0) {
       return res.status(200).json({ sucesso: false, mensagem: 'Nenhum sorteio na janela.' });
     }
@@ -43,9 +37,11 @@ module.exports = async (req, res) => {
     // 3. Parsear JSON de dezenas
     const sorteios = sorteiosRaw.map(row => ({
       concurso: row.concurso,
-      data_sorteio: row.data instanceof Date
-        ? row.data.toISOString().split('T')[0]
-        : String(row.data).split('T')[0],
+      data_sorteio: row.data
+        ? (row.data instanceof Date
+            ? row.data.toISOString().split('T')[0]
+            : String(row.data).split('T')[0])
+        : null,
       dezenas: typeof row.dezenas === 'string' ? JSON.parse(row.dezenas) : row.dezenas
     }));
 
@@ -54,13 +50,11 @@ module.exports = async (req, res) => {
     for (let i = dezena_min; i <= dezena_max; i++) {
       frequencia[i] = { frequencia: 0, percentual: 0 };
     }
-
     sorteios.forEach(s => {
       s.dezenas.forEach(d => {
         if (frequencia[d]) frequencia[d].frequencia++;
       });
     });
-
     const totalAnalise = sorteios.length;
     for (let i = dezena_min; i <= dezena_max; i++) {
       frequencia[i].percentual = parseFloat(((frequencia[i].frequencia / totalAnalise) * 100).toFixed(1));
@@ -70,7 +64,6 @@ module.exports = async (req, res) => {
     const dezenasOrdenadas = Object.entries(frequencia)
       .map(([n, d]) => ({ dezena: parseInt(n), frequencia: d.frequencia }))
       .sort((a, b) => b.frequencia - a.frequencia);
-
     const terco = Math.ceil(dezenasOrdenadas.length / 3);
     const quentes = dezenasOrdenadas.slice(0, terco).map(d => d.dezena);
     const mornos = dezenasOrdenadas.slice(terco, terco * 2).map(d => d.dezena);
@@ -116,7 +109,7 @@ module.exports = async (req, res) => {
           curSeq = 1;
         }
       }
-      sequenciasTotal += (maxSeq - 1); // pares de consecutivos
+      sequenciasTotal += (maxSeq - 1);
       maxSeqHistorica = Math.max(maxSeqHistorica, maxSeq);
     }
 
@@ -170,7 +163,6 @@ module.exports = async (req, res) => {
         ultimos_sorteios: ultimosSorteios
       }
     });
-
   } catch (erro) {
     console.error('Erro em /api/estatisticas:', erro.message);
     return res.status(500).json({ sucesso: false, erro: 'Erro interno ao calcular estatísticas.' });
