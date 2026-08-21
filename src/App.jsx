@@ -67,9 +67,39 @@ function exportarPDF(jogos, dezenas, estrategia, janela, incArr, excArr) {
   const hora = new Date().toLocaleTimeString('pt-BR')
   const estrat = getStrategyName(estrategia)
   const estratExp = getStrategyExplanation(estrategia)
-  const dezenasMini = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#a855f7;color:#170d26;font-size:10px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
-  const dezenasVerde = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#00ff66;color:#170d26;font-size:10px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
-  const dezenasVermelho = (arr) => arr.map(d => `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#ff1744;color:#fff;font-size:10px;font-weight:800;margin:1px;">${pad(d)}</span>`).join('')
+
+  // === CALCULO DE SALTO DE PAGINA DINAMICO ===
+  // A4 = 297mm altura, margem 0.5cm = 5mm topo + 5mm base = 287mm utilizavel
+  const a4Usable = 287
+  // Estimativas de altura do cabecalho (so na primeira pagina) em mm
+  const headerMm = 42        // .header (badge + h1 + sub + border + margin)
+  const infoCardMm = 22      // .info-card (padding + conteudo + margin)
+  // selecao-box variavel: depende de quantas dezenas incluidas/excluidas
+  const totalSelecoes = incArr.length + excArr.length
+  const selecaoMm = totalSelecoes > 0 ? 25 + Math.ceil(totalSelecoes / 12) * 6 : 0
+  // strategy-box variavel: depende do tamanho do texto da estrategia
+  const strategyLines = Math.ceil(estratExp.length / 100)
+  const strategyMm = 30 + strategyLines * 5
+  const jogoTitleMm = 12     // .jogo-title
+  const firstPageHeaderMm = headerMm + infoCardMm + selecaoMm + strategyMm + jogoTitleMm
+  // Altura estimada de cada linha de jogo em mm (print mode)
+  const jogoRowMm = 13
+  // Capacidade da primeira pagina (apos cabecalho)
+  const firstPageCap = Math.max(1, Math.floor((a4Usable - firstPageHeaderMm) / jogoRowMm))
+  // Capacidade das paginas seguintes (sem cabecalho)
+  const nextPageCap = Math.floor(a4Usable / jogoRowMm)
+
+  // Gerar HTML dos jogos com quebra dinamica
+  const dezenasMini = (arr) => arr.map(d =>
+    `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#a855f7;color:#170d26;font-size:10px;font-weight:800;margin:1px;">${pad(d)}</span>`
+  ).join('')
+  const dezenasVerde = (arr) => arr.map(d =>
+    `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#00ff66;color:#170d26;font-size:10px;font-weight:800;margin:1px;">${pad(d)}</span>`
+  ).join('')
+  const dezenasVermelho = (arr) => arr.map(d =>
+    `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#ff1744;color:#fff;font-size:10px;font-weight:800;margin:1px;">${pad(d)}</span>`
+  ).join('')
+
   let selecaoHtml = ''
   if (incArr.length > 0 || excArr.length > 0) {
     let incHtml = ''
@@ -82,66 +112,66 @@ function exportarPDF(jogos, dezenas, estrategia, janela, incArr, excArr) {
     }
     selecaoHtml = `<div class="selecao-box">${incHtml}${excHtml}</div>`
   }
+
   const jogosHtml = jogos.map((j, idx) => {
     let pageBreak = ''
-    if (idx === 20) { pageBreak = ' page-break' }
-    else if (idx > 20 && (idx - 20) % 30 === 0) { pageBreak = ' page-break' }
-    return `
-    <div class="jogo-row${pageBreak}">
+    if (idx === firstPageCap) { pageBreak = ' page-break' }
+    else if (idx > firstPageCap && (idx - firstPageCap) % nextPageCap === 0) { pageBreak = ' page-break' }
+    return `<div class="jogo-row${pageBreak}">
       <span class="jogo-id">#${j.id}</span>
       <span class="dezenas-block">${dezenasMini(j.dezenas)}</span>
       <span class="jogo-stats">Soma: <strong>${j.soma}</strong> &nbsp;|&nbsp; Pares: <strong>${j.pares}</strong> &nbsp;|&nbsp; Impares: <strong>${j.impares}</strong></span>
     </div>`
   }).join('')
+
   const win = window.open('', '_blank')
   win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Loto Rico - Jogos</title><style>
-  @page{margin:0.5cm;}
+  @page{size:A4;margin:0.5cm;}
   *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{height:auto;width:100%;}
-  body{font-family:'Inter',Calibri,system-ui,sans-serif;background:#170d26;color:#e9d5ff;padding:16px;font-size:13px;width:100%;}
-  .header{text-align:center;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #a855f7;width:100%;}
+  html,body{height:auto;}
+  body{font-family:'Inter',Calibri,system-ui,sans-serif;background:#170d26;color:#e9d5ff;max-width:1200px;margin:0 auto;padding:20px;font-size:13px;}
+  .header{text-align:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #a855f7;}
   .header h1{font-size:24px;font-weight:800;color:#a855f7;margin-bottom:2px;}
   .header .sub{color:#b794d4;font-size:13px;}
-  .badge{display:inline-block;padding:4px 16px;border-radius:10px;background:rgba(168,85,247,0.18);border:1px solid #a855f7;color:#a855f7;font-size:15px;font-weight:800;margin-bottom:8px;}
-  .info-card{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;width:100%;}
+  .badge-lot{display:inline-block;padding:4px 16px;border-radius:10px;background:rgba(168,85,247,0.18);border:1px solid #a855f7;color:#a855f7;font-size:15px;font-weight:800;margin-bottom:8px;}
+  .info-card{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
   .info-item{text-align:center;}
   .info-item .label{font-size:10px;color:#b794d4;text-transform:uppercase;letter-spacing:0.05em;}
   .info-item .val{font-size:14px;font-weight:700;color:#a855f7;}
-  .selecao-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:4px;width:100%;}
-  .strategy-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:14px;width:100%;}
+  .selecao-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:4px;}
+  .strategy-box{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:12px;margin-bottom:14px;}
   .strategy-box .stitle{color:#a855f7;font-weight:700;font-size:13px;margin-bottom:4px;}
   .strategy-box .stext{color:#b794d4;font-size:11px;line-height:1.5;}
-  .jogo-title{font-size:14px;font-weight:700;color:#a855f7;margin-bottom:8px;width:100%;}
-  .jogo-row{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:8px 10px;margin-bottom:4px;display:flex;align-items:center;gap:8px;width:100%;}
+  .jogo-title{font-size:14px;font-weight:700;color:#a855f7;margin-bottom:8px;}
+  .jogo-row{background:#241535;border:1px solid #3d2854;border-radius:6px;padding:8px 10px;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
   .jogo-id{font-size:12px;font-weight:700;color:#b794d4;min-width:28px;flex-shrink:0;}
   .dezenas-block{display:flex;flex-wrap:wrap;gap:2px;flex:1 1 auto;}
   .jogo-stats{margin-left:auto;font-size:11px;color:#b794d4;white-space:nowrap;flex-shrink:0;}
   .jogo-stats strong{color:#a855f7;}
-  .footer{margin-top:10px;text-align:center;font-size:10px;color:#b794d4;padding-top:8px;border-top:1px solid #3d2854;width:100%;}
+  .footer{margin-top:10px;text-align:center;font-size:10px;color:#b794d4;padding-top:8px;border-top:1px solid #3d2854;}
   .page-break{page-break-before:always;}
   @media print{
-    html,body{width:100%;margin:0;padding:0;}
-    body{padding:8px;font-size:14px;}
+    body{padding:8px;font-size:14px;max-width:100%;}
     .header{margin-bottom:12px;padding-bottom:10px;}
-    .header h1{font-size:28px;}
+    .header h1{font-size:26px;}
     .header .sub{font-size:14px;}
-    .badge{font-size:17px;padding:5px 18px;margin-bottom:10px;}
+    .badge-lot{font-size:16px;padding:5px 18px;margin-bottom:10px;}
     .info-card{padding:14px;margin-bottom:12px;}
     .info-item .label{font-size:11px;}
-    .info-item .val{font-size:16px;}
+    .info-item .val{font-size:15px;}
     .selecao-box{padding:14px;margin-bottom:12px;}
     .strategy-box{padding:14px;margin-bottom:14px;}
     .strategy-box .stitle{font-size:14px;}
     .strategy-box .stext{font-size:12px;line-height:1.6;}
-    .jogo-title{font-size:16px;margin-bottom:10px;}
-    .jogo-row{padding:10px 12px;margin-bottom:5px;width:100%;}
+    .jogo-title{font-size:15px;margin-bottom:10px;}
+    .jogo-row{padding:10px 12px;margin-bottom:5px;}
     .jogo-id{font-size:13px;min-width:32px;}
     .jogo-stats{font-size:12px;}
     .footer{margin-top:8px;padding-top:6px;font-size:11px;}
   }
   </style></head><body>
   <div class="header">
-    <div class="badge">Lotofácil</div>
+    <div class="badge-lot">Lotofácil</div>
     <h1>Loto Rico</h1>
     <div class="sub">Inteligência Estatística para Loterias</div>
   </div>
