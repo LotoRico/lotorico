@@ -15,6 +15,36 @@ const pool = mysql.createPool({
 });
 
 /**
+ * Whitelist de tabelas por slug de loteria.
+ * Previne SQL injection — nenhum input do usuário vai direto para nome de tabela.
+ */
+const TABELAS_ESPEC = {
+  'lotofacil': 'lotofacil_espec'
+};
+
+const TABELAS_RESULTADOS = {
+  'lotofacil': 'lotofacil_resultados'
+};
+
+/**
+ * Retorna o nome da tabela de especificações de uma loteria.
+ * @param {string} slug - ex: 'lotofacil'
+ * @returns {string|null} Nome da tabela ou null se não existir
+ */
+function obterTabelaEspec(slug) {
+  return TABELAS_ESPEC[slug] || null;
+}
+
+/**
+ * Retorna o nome da tabela de resultados de uma loteria.
+ * @param {string} slug - ex: 'lotofacil'
+ * @returns {string|null} Nome da tabela ou null se não existir
+ */
+function obterTabelaResultados(slug) {
+  return TABELAS_RESULTADOS[slug] || null;
+}
+
+/**
  * Cache em memória das configurações de loteria.
  * Evita uma query no banco a cada requisição de endpoint.
  */
@@ -29,14 +59,14 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
  */
 async function obterConfigLoteria(slug) {
   const agora = Date.now();
-
   if (!cacheLoterias || (agora - cacheTimestamp) > CACHE_TTL) {
-    const [rows] = await pool.execute('SELECT * FROM loterias WHERE ativo = TRUE');
+    const tabela = obterTabelaEspec(slug);
+    if (!tabela) return null;
+    const [rows] = await pool.query(`SELECT * FROM ${tabela} WHERE ativo = TRUE`);
     cacheLoterias = rows;
     cacheTimestamp = agora;
   }
-
-  return cacheLoterias.find(l => l.slug === slug) || null;
+  return cacheLoterias.find(l => l.slug === slug) || cacheLoterias[0] || null;
 }
 
 /**
@@ -45,14 +75,18 @@ async function obterConfigLoteria(slug) {
  */
 async function listarLoterias() {
   const agora = Date.now();
-
   if (!cacheLoterias || (agora - cacheTimestamp) > CACHE_TTL) {
-    const [rows] = await pool.execute('SELECT * FROM loterias WHERE ativo = TRUE');
+    const [rows] = await pool.query(`SELECT * FROM lotofacil_espec WHERE ativo = TRUE`);
     cacheLoterias = rows;
     cacheTimestamp = agora;
   }
-
   return cacheLoterias;
 }
 
-module.exports = { pool, obterConfigLoteria, listarLoterias };
+module.exports = {
+  pool,
+  obterConfigLoteria,
+  obterTabelaEspec,
+  obterTabelaResultados,
+  listarLoterias
+};
