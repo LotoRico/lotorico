@@ -70,24 +70,30 @@ function exportarPDF(jogos, dezenas, estrategia, janela, incArr, excArr) {
 
   // === CALCULO DE SALTO DE PAGINA DINAMICO ===
   // A4 = 297mm altura, margem 0.5cm = 5mm topo + 5mm base = 287mm utilizavel
+  // Cada linha de jogo com moldura (padding + border + margin + conteudo) = ~14mm
   const a4Usable = 287
-  // Estimativas de altura do cabecalho (so na primeira pagina) em mm
-  const headerMm = 42        // .header (badge + h1 + sub + border + margin)
-  const infoCardMm = 22      // .info-card (padding + conteudo + margin)
-  // selecao-box variavel: depende de quantas dezenas incluidas/excluidas
-  const totalSelecoes = incArr.length + excArr.length
-  const selecaoMm = totalSelecoes > 0 ? 25 + Math.ceil(totalSelecoes / 12) * 6 : 0
-  // strategy-box variavel: depende do tamanho do texto da estrategia
-  const strategyLines = Math.ceil(estratExp.length / 100)
-  const strategyMm = 30 + strategyLines * 5
-  const jogoTitleMm = 12     // .jogo-title
-  const firstPageHeaderMm = headerMm + infoCardMm + selecaoMm + strategyMm + jogoTitleMm
-  // Altura estimada de cada linha de jogo em mm (print mode)
-  const jogoRowMm = 13
+  const rowMm = 14
+
+  // Componentes fixos do cabecalho (so pagina 1) em mm
+  const headerFixoMm = 22    // .header (badge + h1 + sub + border + margin)
+  const infoCardMm = 16      // .info-card (padding + conteudo + margin)
+  const jogoTitleMm = 7      // .jogo-title
+
+  // Variavel: selecao-box (depende de quantas dezenas incluidas/excluidas)
+  const totalSel = incArr.length + excArr.length
+  const selecaoMm = totalSel > 0 ? 16 + Math.ceil(totalSel / 15) * 4 : 0
+
+  // Variavel: strategy-box (depende do tamanho do texto da estrategia)
+  const stratLines = Math.ceil(estratExp.length / 90)
+  const strategyMm = 22 + stratLines * 5
+
+  // Total do cabecalho da primeira pagina
+  const firstPageHeaderMm = headerFixoMm + infoCardMm + selecaoMm + strategyMm + jogoTitleMm
+
   // Capacidade da primeira pagina (apos cabecalho)
-  const firstPageCap = Math.max(1, Math.floor((a4Usable - firstPageHeaderMm) / jogoRowMm))
+  const firstPageCap = Math.max(1, Math.floor((a4Usable - firstPageHeaderMm) / rowMm))
   // Capacidade das paginas seguintes (sem cabecalho)
-  const nextPageCap = Math.floor(a4Usable / jogoRowMm)
+  const nextPageCap = Math.floor(a4Usable / rowMm)
 
   // Gerar HTML dos jogos com quebra dinamica
   const dezenasMini = (arr) => arr.map(d =>
