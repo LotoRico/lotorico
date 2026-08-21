@@ -193,6 +193,8 @@ export default function App() {
   const [jogos, setJogos] = useState([])
   const [loadingStats, setLoadingStats] = useState(true)
   const [loadingJogos, setLoadingJogos] = useState(false)
+  const [loadingAtualizar, setLoadingAtualizar] = useState(false)
+  const [feedback, setFeedback] = useState('')
   const [erro, setErro] = useState('')
   const [janela, setJanela] = useState(20)
   const [quantidade, setQuantidade] = useState(10)
@@ -202,7 +204,6 @@ export default function App() {
   const [excluir, setExcluir] = useState([])
   const [mode, setMode] = useState('incluir')
 
-  // Config dinâmica da loteria (vem do backend nas stats)
   const totalDezenas = stats?.loteria?.total_dezenas || 25
   const minSelecao = stats?.loteria?.min_selecao || 15
   const maxSelecao = stats?.loteria?.max_selecao || 20
@@ -238,6 +239,7 @@ export default function App() {
 
   function handleVolanteClick(num) {
     setErro('')
+    setFeedback('')
     if (mode === 'incluir') {
       if (incluir.includes(num)) {
         setIncluir(incluir.filter(n => n !== num))
@@ -267,6 +269,7 @@ export default function App() {
 
   async function gerarJogos() {
     setErro('')
+    setFeedback('')
     if (incluir.length > maxInclusoes) {
       setErro(`Você marcou ${incluir.length} inclusões, mas o máximo para ${dezenas} dezenas é ${maxInclusoes}.`)
       return
@@ -294,10 +297,25 @@ export default function App() {
 
   async function atualizarBanco() {
     setErro('')
+    setFeedback('')
+    setLoadingAtualizar(true)
     try {
       const r = await fetchAPI('atualizar?loteria=lotofacil')
-      if (r.sucesso) { carregarStats() } else { setErro(r.mensagem) }
-    } catch (e) { setErro('Erro ao atualizar banco') }
+      if (r.sucesso) {
+        if (r.novos > 0) {
+          setFeedback(`${r.novos} concurso(s) importado(s)! Último: ${r.ultimo_caixa}.`)
+          await carregarStats()
+        } else if (r.ainda_faltam > 0) {
+          setFeedback(`${r.novos} importado(s). Ainda faltam ${r.ainda_faltam}. Clique novamente para continuar.`)
+          await carregarStats()
+        } else {
+          setFeedback(`Banco já atualizado. Último concurso: ${r.ultimo_caixa}.`)
+        }
+      } else {
+        setErro(r.mensagem || 'Erro ao atualizar banco')
+      }
+    } catch (e) { setErro('Erro ao atualizar banco: ' + e.message) }
+    setLoadingAtualizar(false)
   }
 
   const classificacao = stats?.classificacao_termica
@@ -321,12 +339,15 @@ export default function App() {
         </div>
         <span className="lottery-badge">Lotofácil</span>
         <div className="header-actions">
-          <button className="btn btn-secondary btn-sm" onClick={atualizarBanco}>Atualizar Banco</button>
+          <button className="btn btn-secondary btn-sm" onClick={atualizarBanco} disabled={loadingAtualizar}>
+            {loadingAtualizar ? 'Atualizando...' : 'Atualizar Banco'}
+          </button>
           <button className="btn btn-secondary btn-sm" onClick={carregarStats} disabled={loadingStats}>
             {loadingStats ? 'Carregando...' : 'Recarregar Stats'}
           </button>
         </div>
       </div>
+      {feedback && <div className="alert alert-success">{feedback}</div>}
       {erro && <div className="alert alert-error">{erro}</div>}
       {stats && (
         <div className="dashboard">
