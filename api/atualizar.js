@@ -1,6 +1,6 @@
 // api/atualizar.js
 const { pool, obterTabelaResultados } = require('./_lib/db');
-const { fetchConcurso } = require('./_lib/caixa-client');
+const { fetchConcurso, fetchConcursosApos } = require('./_lib/caixa-client');
 
 function setHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -29,8 +29,8 @@ module.exports = async (req, res) => {
     const [rows] = await pool.query(`SELECT MAX(concurso) as ultimo FROM ${tabela}`);
     const ultimoBanco = rows[0].ultimo || 0;
 
-    const resultadoCaixa = await fetchConcurso(null);
-    const ultimoCaixa = resultadoCaixa.concurso;
+    const resultadoLatest = await fetchConcurso(null);
+    const ultimoCaixa = resultadoLatest.concurso;
 
     if (ultimoCaixa <= ultimoBanco) {
       return res.status(200).json({
@@ -44,14 +44,14 @@ module.exports = async (req, res) => {
 
     const faltam = ultimoCaixa - ultimoBanco;
     const limite = Math.min(faltam, MAX_POR_LOTE);
+
+    const concursosParaImportar = await fetchConcursosApos(ultimoBanco, limite);
+
     const importados = [];
     const erros = [];
 
-    for (let i = 0; i < limite; i++) {
-      const concurso = ultimoBanco + 1 + i;
+    for (const dados of concursosParaImportar) {
       try {
-        const dados = await fetchConcurso(concurso);
-
         await pool.query(
           `INSERT INTO ${tabela}
            (concurso, data, dezenas, dezenas_ordem_sorteio, acumulado,
@@ -69,34 +69,7 @@ module.exports = async (req, res) => {
            ON DUPLICATE KEY UPDATE
             data = VALUES(data),
             dezenas = VALUES(dezenas),
-            dezenas_ordem_sorteio = VALUES(dezenas_ordem_sorteio),
-            acumulado = VALUES(acumulado),
-            local_sorteio = VALUES(local_sorteio),
-            municipio_uf_sorteio = VALUES(municipio_uf_sorteio),
-            indicador_concurso_especial = VALUES(indicador_concurso_especial),
-            numero_concurso_anterior = VALUES(numero_concurso_anterior),
-            numero_concurso_proximo = VALUES(numero_concurso_proximo),
-            numero_concurso_final_0_5 = VALUES(numero_concurso_final_0_5),
-            numero_jogo = VALUES(numero_jogo),
-            tipo_jogo = VALUES(tipo_jogo),
-            tipo_publicacao = VALUES(tipo_publicacao),
-            ultimo_concurso = VALUES(ultimo_concurso),
-            observacao = VALUES(observacao),
-            exibir_detalhamento_por_cidade = VALUES(exibir_detalhamento_por_cidade),
-            data_proximo_concurso = VALUES(data_proximo_concurso),
-            valor_arrecadado = VALUES(valor_arrecadado),
-            valor_estimado_proximo_concurso = VALUES(valor_estimado_proximo_concurso),
-            valor_acumulado_proximo_concurso = VALUES(valor_acumulado_proximo_concurso),
-            valor_acumulado_concurso_0_5 = VALUES(valor_acumulado_concurso_0_5),
-            valor_acumulado_concurso_especial = VALUES(valor_acumulado_concurso_especial),
-            valor_saldo_reserva_garantidora = VALUES(valor_saldo_reserva_garantidora),
-            valor_total_premio_faixa_um = VALUES(valor_total_premio_faixa_um),
-            premiacao_contingencia = VALUES(premiacao_contingencia),
-            lista_rateio_premio = VALUES(lista_rateio_premio),
-            lista_municipio_uf_ganhadores = VALUES(lista_municipio_uf_ganhadores),
-            lista_dezenas_segundo_sorteio = VALUES(lista_dezenas_segundo_sorteio),
-            lista_resultado_equipe_esportiva = VALUES(lista_resultado_equipe_esportiva),
-            nome_time_coracao_mes_sorte = VALUES(nome_time_coracao_mes_sorte)`,
+            dezenas_ordem_sorteio = VALUES(dezenas_ordem_sorteio)`,
           [dados.concurso, dados.data, dados.dezenas, dados.dezenas_ordem_sorteio, dados.acumulado,
            dados.local_sorteio, dados.municipio_uf_sorteio, dados.indicador_concurso_especial,
            dados.numero_concurso_anterior, dados.numero_concurso_proximo, dados.numero_concurso_final_0_5,
@@ -109,11 +82,9 @@ module.exports = async (req, res) => {
            dados.lista_dezenas_segundo_sorteio, dados.lista_resultado_equipe_esportiva,
            dados.nome_time_coracao_mes_sorte]
         );
-
-        importados.push(concurso);
-        await new Promise(r => setTimeout(r, 600));
+        importados.push(dados.concurso);
       } catch (err) {
-        erros.push({ concurso, erro: err.message });
+        erros.push({ concurso: dados.concurso, erro: err.message });
       }
     }
 
