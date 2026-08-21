@@ -67,35 +67,18 @@ function exportarPDF(jogos, dezenas, estrategia, janela, incArr, excArr) {
   const hora = new Date().toLocaleTimeString('pt-BR')
   const estrat = getStrategyName(estrategia)
   const estratExp = getStrategyExplanation(estrategia)
-
-  // === CALCULO DE SALTO DE PAGINA DINAMICO ===
-  // A4 = 297mm altura, margem 0.5cm = 5mm topo + 5mm base = 287mm utilizavel
-  // Cada linha de jogo com moldura (padding + border + margin + conteudo) = ~14mm
   const a4Usable = 287
   const rowMm = 14
-
-  // Componentes fixos do cabecalho (so pagina 1) em mm
-  const headerFixoMm = 22    // .header (badge + h1 + sub + border + margin)
-  const infoCardMm = 16      // .info-card (padding + conteudo + margin)
-  const jogoTitleMm = 7      // .jogo-title
-
-  // Variavel: selecao-box (depende de quantas dezenas incluidas/excluidas)
+  const headerFixoMm = 22
+  const infoCardMm = 16
+  const jogoTitleMm = 7
   const totalSel = incArr.length + excArr.length
   const selecaoMm = totalSel > 0 ? 16 + Math.ceil(totalSel / 15) * 4 : 0
-
-  // Variavel: strategy-box (depende do tamanho do texto da estrategia)
   const stratLines = Math.ceil(estratExp.length / 90)
   const strategyMm = 22 + stratLines * 5
-
-  // Total do cabecalho da primeira pagina
   const firstPageHeaderMm = headerFixoMm + infoCardMm + selecaoMm + strategyMm + jogoTitleMm
-
-  // Capacidade da primeira pagina (apos cabecalho)
   const firstPageCap = Math.max(1, Math.floor((a4Usable - firstPageHeaderMm) / rowMm))
-  // Capacidade das paginas seguintes (sem cabecalho)
   const nextPageCap = Math.floor(a4Usable / rowMm)
-
-  // Gerar HTML dos jogos com quebra dinamica
   const dezenasMini = (arr) => arr.map(d =>
     `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#a855f7;color:#170d26;font-size:10px;font-weight:800;margin:1px;">${pad(d)}</span>`
   ).join('')
@@ -105,7 +88,6 @@ function exportarPDF(jogos, dezenas, estrategia, janela, incArr, excArr) {
   const dezenasVermelho = (arr) => arr.map(d =>
     `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#ff1744;color:#fff;font-size:10px;font-weight:800;margin:1px;">${pad(d)}</span>`
   ).join('')
-
   let selecaoHtml = ''
   if (incArr.length > 0 || excArr.length > 0) {
     let incHtml = ''
@@ -118,7 +100,6 @@ function exportarPDF(jogos, dezenas, estrategia, janela, incArr, excArr) {
     }
     selecaoHtml = `<div class="selecao-box">${incHtml}${excHtml}</div>`
   }
-
   const jogosHtml = jogos.map((j, idx) => {
     let pageBreak = ''
     if (idx === firstPageCap) { pageBreak = ' page-break' }
@@ -129,7 +110,6 @@ function exportarPDF(jogos, dezenas, estrategia, janela, incArr, excArr) {
       <span class="jogo-stats">Soma: <strong>${j.soma}</strong> &nbsp;|&nbsp; Pares: <strong>${j.pares}</strong> &nbsp;|&nbsp; Impares: <strong>${j.impares}</strong></span>
     </div>`
   }).join('')
-
   const win = window.open('', '_blank')
   win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Loto Rico - Jogos</title><style>
   @page{size:A4;margin:0.5cm;}
@@ -222,14 +202,21 @@ export default function App() {
   const [excluir, setExcluir] = useState([])
   const [mode, setMode] = useState('incluir')
 
+  // Config dinâmica da loteria (vem do backend nas stats)
+  const totalDezenas = stats?.loteria?.total_dezenas || 25
+  const minSelecao = stats?.loteria?.min_selecao || 15
+  const maxSelecao = stats?.loteria?.max_selecao || 20
+  const dezenaMin = stats?.loteria?.dezena_min || 1
+  const dezenaMax = stats?.loteria?.dezena_max || 25
+
   const maxInclusoes = dezenas
-  const maxExclusoes = 25 - dezenas
+  const maxExclusoes = totalDezenas - dezenas
   const temSelecao = incluir.length > 0 || excluir.length > 0
 
   async function carregarStats() {
     setLoadingStats(true)
     try {
-      const r = await fetchAPI(`estatisticas?janela=${janela}`)
+      const r = await fetchAPI(`estatisticas?loteria=lotofacil&janela=${janela}`)
       if (r.sucesso) setStats(r.dados)
     } catch (e) { setErro('Erro ao carregar estatisticas') }
     setLoadingStats(false)
@@ -242,12 +229,12 @@ export default function App() {
       setIncluir(incluir.slice(0, dezenas))
       setErro(`Inclusões ajustadas para ${dezenas} (máximo para ${dezenas} dezenas por jogo).`)
     }
-    const maxExc = 25 - dezenas
+    const maxExc = totalDezenas - dezenas
     if (excluir.length > maxExc) {
       setExcluir(excluir.slice(0, maxExc))
       setErro(`Exclusões ajustadas para ${maxExc} (máximo para ${dezenas} dezenas por jogo).`)
     }
-  }, [dezenas])
+  }, [dezenas, totalDezenas])
 
   function handleVolanteClick(num) {
     setErro('')
@@ -256,7 +243,7 @@ export default function App() {
         setIncluir(incluir.filter(n => n !== num))
       } else {
         if (incluir.length >= maxInclusoes) {
-          setErro(`Não é possível incluir mais de ${maxInclusoes} dezenas em jogos de ${dezenas} dezenas. Remova uma inclusão ou aumente as dezenas por jogo.`)
+          setErro(`Não é possível incluir mais de ${maxInclusoes} dezenas em jogos de ${dezenas} dezenas.`)
           return
         }
         if (excluir.includes(num)) setExcluir(excluir.filter(n => n !== num))
@@ -267,7 +254,7 @@ export default function App() {
         setExcluir(excluir.filter(n => n !== num))
       } else {
         if (excluir.length >= maxExclusoes) {
-          setErro(`Não é possível excluir mais de ${maxExclusoes} dezenas em jogos de ${dezenas} dezenas. Remova uma exclusão ou reduza as dezenas por jogo.`)
+          setErro(`Não é possível excluir mais de ${maxExclusoes} dezenas em jogos de ${dezenas} dezenas.`)
           return
         }
         if (incluir.includes(num)) setIncluir(incluir.filter(n => n !== num))
@@ -288,15 +275,15 @@ export default function App() {
       setErro(`Você marcou ${excluir.length} exclusões, mas o máximo para ${dezenas} dezenas é ${maxExclusoes}.`)
       return
     }
-    const disponiveis = 25 - incluir.length - excluir.length
+    const disponiveis = totalDezenas - incluir.length - excluir.length
     const necessarias = dezenas - incluir.length
     if (necessarias > disponiveis) {
-      setErro(`Dezenas insuficientes: você precisa de ${necessarias} dezenas aleatórias, mas só há ${disponiveis} disponíveis (25 - ${incluir.length} inclusões - ${excluir.length} exclusões).`)
+      setErro(`Dezenas insuficientes: você precisa de ${necessarias} dezenas aleatórias, mas só há ${disponiveis} disponíveis.`)
       return
     }
     setLoadingJogos(true)
     try {
-      let url = `gerar-jogos?quantidade=${quantidade}&dezenas=${dezenas}&janela=${janela}&estrategia=${estrategia}`
+      let url = `gerar-jogos?loteria=lotofacil&quantidade=${quantidade}&dezenas=${dezenas}&janela=${janela}&estrategia=${estrategia}`
       if (incluir.length) url += `&incluir=${incluir.join(',')}`
       if (excluir.length) url += `&excluir=${excluir.join(',')}`
       const r = await fetchAPI(url)
@@ -308,7 +295,7 @@ export default function App() {
   async function atualizarBanco() {
     setErro('')
     try {
-      const r = await fetchAPI('atualizar')
+      const r = await fetchAPI('atualizar?loteria=lotofacil')
       if (r.sucesso) { carregarStats() } else { setErro(r.mensagem) }
     } catch (e) { setErro('Erro ao atualizar banco') }
   }
@@ -340,9 +327,7 @@ export default function App() {
           </button>
         </div>
       </div>
-
       {erro && <div className="alert alert-error">{erro}</div>}
-
       {stats && (
         <div className="dashboard">
           <div className="stat-card"><div className="label">Registros no Banco</div><div className="value">{stats.total_registros_banco}</div><div className="sub">Concurso {stats.concurso_final}</div></div>
@@ -353,7 +338,6 @@ export default function App() {
           <div className="stat-card"><div className="label">Sequências Média</div><div className="value">{stats.sequencias?.media_sequencias}</div><div className="sub">Max: {stats.sequencias?.max_sequencia_historica}</div></div>
         </div>
       )}
-
       {classificacao && (
         <div className="card" style={{ marginBottom: '16px' }}>
           <h2>Classificação Térmica</h2>
@@ -379,7 +363,6 @@ export default function App() {
           </div>
         </div>
       )}
-
       <div className="main-grid">
         <div className="card">
           <h2>Volante Interativo</h2>
@@ -394,12 +377,12 @@ export default function App() {
             <InfoIcon>
               {mode === 'incluir'
                 ? <>Dezenas marcadas como <strong>Incluir</strong> devem aparecer obrigatoriamente em todos os jogos gerados. Uma dezena não pode estar simultaneamente em <strong>Incluir</strong> e <strong>Excluir</strong>. O máximo de inclusões é igual ao número de dezenas por jogo.</>
-                : <>Dezenas marcadas como <strong>Excluir</strong> não devem aparecer em nenhum jogo gerado. Uma dezena não pode estar simultaneamente em <strong>Incluir</strong> e <strong>Excluir</strong>. O máximo de exclusões é 25 menos o número de dezenas por jogo.</>
+                : <>Dezenas marcadas como <strong>Excluir</strong> não devem aparecer em nenhum jogo gerado. Uma dezena não pode estar simultaneamente em <strong>Incluir</strong> e <strong>Excluir</strong>. O máximo de exclusões é {totalDezenas} menos o número de dezenas por jogo.</>
               }
             </InfoIcon>
           </div>
           <div className="volante-grid">
-            {Array.from({ length: 25 }, (_, i) => i + 1).map(num => {
+            {Array.from({ length: totalDezenas }, (_, i) => dezenaMin + i).map(num => {
               const isIncluir = incluir.includes(num)
               const isExcluir = excluir.includes(num)
               const thermal = getThermalClass(classificacao, num)
@@ -421,7 +404,6 @@ export default function App() {
             </div>
           </div>
         </div>
-
         <div className="card">
           <h2>Painel de Controle</h2>
           <div className="form-group">
@@ -439,8 +421,8 @@ export default function App() {
             </select>
           </div>
           <div className="form-group">
-            <label>Dezenas por jogo: <strong style={{ color: 'var(--accent)' }}>{dezenas}</strong> <InfoIcon>Quantidade de dezenas em cada jogo gerado. Na Lotofácil, o volante aceita de <strong>15 a 20 dezenas</strong> por aposta. Alterar este valor recalcula os limites de inclusões e exclusões automaticamente.</InfoIcon></label>
-            <input type="range" min="15" max="20" value={dezenas} onChange={e => setDezenas(parseInt(e.target.value, 10))} />
+            <label>Dezenas por jogo: <strong style={{ color: 'var(--accent)' }}>{dezenas}</strong> <InfoIcon>Quantidade de dezenas em cada jogo gerado. Na Lotofácil, o volante aceita de <strong>{minSelecao} a {maxSelecao}</strong> dezenas por aposta. Alterar este valor recalcula os limites de inclusões e exclusões automaticamente.</InfoIcon></label>
+            <input type="range" min={minSelecao} max={maxSelecao} value={dezenas} onChange={e => setDezenas(parseInt(e.target.value, 10))} />
           </div>
           <div className="form-group">
             <label>Quantidade de jogos: <strong style={{ color: 'var(--accent)' }}>{quantidade}</strong> <InfoIcon>Número de combinações a serem geradas no lote atual. Aceita de <strong>1 a 300 jogos</strong> por geração.</InfoIcon></label>
@@ -455,7 +437,6 @@ export default function App() {
           </button>
         </div>
       </div>
-
       {stats?.ultimos_sorteios && (
         <div className="card" style={{ marginTop: '16px' }}>
           <h2>Últimos Sorteios</h2>
@@ -470,7 +451,6 @@ export default function App() {
           ))}
         </div>
       )}
-
       {jogos.length > 0 && (
         <div className="card jogos-section">
           <div className="jogos-header">
