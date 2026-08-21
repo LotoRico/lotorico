@@ -1,5 +1,5 @@
 // api/atualizar.js
-const pool = require('./_lib/db');
+const { pool, obterTabelaResultados } = require('./_lib/db');
 const { fetchConcurso } = require('./_lib/caixa-client');
 
 function setHeaders(res) {
@@ -19,11 +19,18 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const [rows] = await pool.query('SELECT MAX(concurso) as ultimo FROM sorteios');
+    const slug = req.query.loteria || 'lotofacil';
+    const tabela = obterTabelaResultados(slug);
+
+    if (!tabela) {
+      return res.status(404).json({ sucesso: false, mensagem: `Loteria '${slug}' não encontrada.` });
+    }
+
+    const [rows] = await pool.query(`SELECT MAX(concurso) as ultimo FROM ${tabela}`);
     const ultimoBanco = rows[0].ultimo || 0;
 
     const resultadoCaixa = await fetchConcurso(null);
-    const ultimoCaixa = resultadoCaixa.numero;
+    const ultimoCaixa = resultadoCaixa.concurso;
 
     if (ultimoCaixa <= ultimoBanco) {
       return res.status(200).json({
@@ -46,17 +53,61 @@ module.exports = async (req, res) => {
         const dados = await fetchConcurso(concurso);
 
         await pool.query(
-          `INSERT INTO sorteios
-           (concurso, data_sorteio, bola1, bola2, bola3, bola4, bola5,
-            bola6, bola7, bola8, bola9, bola10, bola11, bola12, bola13,
-            bola14, bola15, ganhadores_15_acertos)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-           ON DUPLICATE KEY UPDATE data_sorteio = VALUES(data_sorteio)`,
-          [dados.numero, dados.data_sorteio,
-           dados.bola1, dados.bola2, dados.bola3, dados.bola4, dados.bola5,
-           dados.bola6, dados.bola7, dados.bola8, dados.bola9, dados.bola10,
-           dados.bola11, dados.bola12, dados.bola13, dados.bola14, dados.bola15,
-           dados.ganhadores_15_acertos]
+          `INSERT INTO ${tabela}
+           (concurso, data, dezenas, dezenas_ordem_sorteio, acumulado,
+            local_sorteio, municipio_uf_sorteio, indicador_concurso_especial,
+            numero_concurso_anterior, numero_concurso_proximo, numero_concurso_final_0_5,
+            numero_jogo, tipo_jogo, tipo_publicacao, ultimo_concurso,
+            observacao, exibir_detalhamento_por_cidade, data_proximo_concurso,
+            valor_arrecadado, valor_estimado_proximo_concurso, valor_acumulado_proximo_concurso,
+            valor_acumulado_concurso_0_5, valor_acumulado_concurso_especial,
+            valor_saldo_reserva_garantidora, valor_total_premio_faixa_um,
+            premiacao_contingencia, lista_rateio_premio, lista_municipio_uf_ganhadores,
+            lista_dezenas_segundo_sorteio, lista_resultado_equipe_esportiva,
+            nome_time_coracao_mes_sorte)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE
+            data = VALUES(data),
+            dezenas = VALUES(dezenas),
+            dezenas_ordem_sorteio = VALUES(dezenas_ordem_sorteio),
+            acumulado = VALUES(acumulado),
+            local_sorteio = VALUES(local_sorteio),
+            municipio_uf_sorteio = VALUES(municipio_uf_sorteio),
+            indicador_concurso_especial = VALUES(indicador_concurso_especial),
+            numero_concurso_anterior = VALUES(numero_concurso_anterior),
+            numero_concurso_proximo = VALUES(numero_concurso_proximo),
+            numero_concurso_final_0_5 = VALUES(numero_concurso_final_0_5),
+            numero_jogo = VALUES(numero_jogo),
+            tipo_jogo = VALUES(tipo_jogo),
+            tipo_publicacao = VALUES(tipo_publicacao),
+            ultimo_concurso = VALUES(ultimo_concurso),
+            observacao = VALUES(observacao),
+            exibir_detalhamento_por_cidade = VALUES(exibir_detalhamento_por_cidade),
+            data_proximo_concurso = VALUES(data_proximo_concurso),
+            valor_arrecadado = VALUES(valor_arrecadado),
+            valor_estimado_proximo_concurso = VALUES(valor_estimado_proximo_concurso),
+            valor_acumulado_proximo_concurso = VALUES(valor_acumulado_proximo_concurso),
+            valor_acumulado_concurso_0_5 = VALUES(valor_acumulado_concurso_0_5),
+            valor_acumulado_concurso_especial = VALUES(valor_acumulado_concurso_especial),
+            valor_saldo_reserva_garantidora = VALUES(valor_saldo_reserva_garantidora),
+            valor_total_premio_faixa_um = VALUES(valor_total_premio_faixa_um),
+            premiacao_contingencia = VALUES(premiacao_contingencia),
+            lista_rateio_premio = VALUES(lista_rateio_premio),
+            lista_municipio_uf_ganhadores = VALUES(lista_municipio_uf_ganhadores),
+            lista_dezenas_segundo_sorteio = VALUES(lista_dezenas_segundo_sorteio),
+            lista_resultado_equipe_esportiva = VALUES(lista_resultado_equipe_esportiva),
+            nome_time_coracao_mes_sorte = VALUES(nome_time_coracao_mes_sorte)`,
+          [dados.concurso, dados.data, dados.dezenas, dados.dezenas_ordem_sorteio, dados.acumulado,
+           dados.local_sorteio, dados.municipio_uf_sorteio, dados.indicador_concurso_especial,
+           dados.numero_concurso_anterior, dados.numero_concurso_proximo, dados.numero_concurso_final_0_5,
+           dados.numero_jogo, dados.tipo_jogo, dados.tipo_publicacao, dados.ultimo_concurso,
+           dados.observacao, dados.exibir_detalhamento_por_cidade, dados.data_proximo_concurso,
+           dados.valor_arrecadado, dados.valor_estimado_proximo_concurso, dados.valor_acumulado_proximo_concurso,
+           dados.valor_acumulado_concurso_0_5, dados.valor_acumulado_concurso_especial,
+           dados.valor_saldo_reserva_garantidora, dados.valor_total_premio_faixa_um,
+           dados.premiacao_contingencia, dados.lista_rateio_premio, dados.lista_municipio_uf_ganhadores,
+           dados.lista_dezenas_segundo_sorteio, dados.lista_resultado_equipe_esportiva,
+           dados.nome_time_coracao_mes_sorte]
         );
 
         importados.push(concurso);
@@ -79,6 +130,7 @@ module.exports = async (req, res) => {
       ainda_faltam: aindaFaltam > 0 ? aindaFaltam : 0,
       erros: erros.length > 0 ? erros : undefined
     });
+
   } catch (error) {
     console.error('[atualizar] Erro:', error.message);
     return res.status(500).json({
