@@ -1,11 +1,13 @@
 // api/_lib/caixa-client.js
 
+const https = require('https');
 const GITHUB_RAW = 'https://raw.githubusercontent.com/guilhermeasn/loteria.json/master/data/lotofacil.json';
-const CAIXA_BASE = 'https://servicebus2.caixa.gov.br/portaldeloterias/api/lotofacil';
+const CAIXA_HOST = 'servicebus2.caixa.gov.br';
+const CAIXA_PATH = '/portaldeloterias/api/lotofacil';
 
-let cacheDados = null;
+let cacheDadosGitHub = null;
 let cacheTimestamp = 0;
-const CACHE_TTL = 60 * 60 * 1000; // 1 hora
+const CACHE_TTL = 60 * 60 * 1000;
 
 function parseDataCaixa(dataStr) {
   if (!dataStr) return null;
@@ -21,47 +23,94 @@ function safeJson(val) {
   try { return JSON.stringify(val); } catch { return null; }
 }
 
-function normalizarDezenas(entry) {
-  const dezenasOrdem = (entry || []).map(d => parseInt(d, 10));
-  const dezenas = [...dezenasOrdem].sort((a, b) => a - b);
-  return { dezenas, dezenasOrdem };
+function httpsGetCaixa(path) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: CAIXA_HOST,
+      path: path,
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'pt-BR,pt;q=0.9',
+        'Referer': 'https://loterias.caixa.gov.br/Paginas/Lotofacil.aspx'
+      },
+      timeout: 10000
+    };
+
+    const req = https.request(options, (resp) => {
+      let data = '';
+      const encoding = resp.headers['content-encoding'];
+      let stream = resp;
+
+      if (encoding === 'br') {
+        const zlib = require('zlib');
+        stream = resp.pipe(zlib.createBrotliDecompress());
+      } else if (encoding === 'gzip') {
+        const zlib = require('zlib');
+        stream = resp.pipe(zlib.createGunzip());
+      }
+
+      stream.on('data', chunk => data += chunk);
+      stream.on('end', () => {
+        if (resp.statusCode !== 200) {
+          reject(new Error(`Caixa retornou ${resp.statusCode}`));
+          return;
+        }
+        try {
+          resolve(JSON.parse(data));
+        } catch (e) {
+          reject(new Error('Resposta da Caixa não é JSON válido'));
+        }
+      });
+      stream.on('error', reject);
+    });
+
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('Timeout na Caixa')); });
+    req.end();
+  });
 }
 
-async function fetchDadosGitHub() {
+async function httpsGetGitHub(url) {
   const agora = Date.now();
-  if (cacheDados && (agora - cacheTimestamp) < CACHE_TTL) {
-    return cacheDados;
+  if (cacheDadosGitHub && (agora - cacheTimestamp) < CACHE_TTL) {
+    return cacheDadosGitHub;
   }
 
-  const resp = await fetch(GITHUB_RAW, {
-    headers: { 'Accept': 'application/json' },
-    signal: AbortSignal.timeout(10000)
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const options = {
+      hostname: parsed.hostname,
+      path: parsed.pathname,
+      method: 'GET',
+      headers: { 'Accept': 'application/json', 'User-Agent': 'LotoRico/1.0' },
+      timeout: 10000
+    };
+
+    const req = https.request(options, (resp) => {
+      let data = '';
+      resp.on('data', chunk => data += chunk);
+      resp.on('end', () => {
+        if (resp.statusCode !== 200) {
+          reject(new Error(`GitHub retornou ${resp.statusCode}`));
+          return;
+        }
+        try {
+          const json = JSON.parse(data);
+          cacheDadosGitHub = json;
+          cacheTimestamp = Date.now();
+          resolve(json);
+        } catch (e) {
+          reject(new Error('Resposta do GitHub não é JSON válido'));
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('Timeout no GitHub')); });
+    req.end();
   });
-
-  if (!resp.ok) {
-    throw new Error(`GitHub retornou HTTP ${resp.status}`);
-  }
-
-  const text = await resp.text();
-  const json = JSON.parse(text);
-  cacheDados = json;
-  cacheTimestamp = agora;
-  return json;
-}
-
-async function fetchConcursoCaixa(concurso) {
-  const url = concurso ? `${CAIXA_BASE}/${concurso}` : CAIXA_BASE;
-  const resp = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'Accept': 'application/json',
-      'Referer': 'https://loterias.caixa.gov.br/Paginas/Lotofacil.aspx'
-    },
-    signal: AbortSignal.timeout(10000)
-  });
-
-  if (!resp.ok) throw new Error(`Caixa retornou HTTP ${resp.status}`);
-  return JSON.parse(await resp.text());
 }
 
 function parseResultadoCaixa(resultado) {
@@ -104,7 +153,8 @@ function parseResultadoCaixa(resultado) {
 }
 
 function parseResultadoGitHub(concurso, entry) {
-  const { dezenas, dezenasOrdem } = normalizarDezenas(entry);
+  const dezenasOrdem = (entry || []).map(d => parseInt(d, 10));
+  const dezenas = [...dezenasOrdem].sort((a, b) => a - b);
 
   return {
     concurso,
@@ -142,38 +192,45 @@ function parseResultadoGitHub(concurso, entry) {
 }
 
 async function fetchConcurso(concurso) {
-  if (!concurso) {
-    try {
-      const resultado = await fetchConcursoCaixa(null);
-      return parseResultadoCaixa(resultado);
-    } catch (eCaixa) {
-      const dados = await fetchDadosGitHub();
-      const chaves = Object.keys(dados).map(Number);
+  const caixaPath = concurso ? `${CAIXA_PATH}/${concurso}` : CAIXA_PATH;
+
+  try {
+    const resultado = await httpsGetCaixa(caixaPath);
+    return parseResultadoCaixa(resultado);
+  } catch (eCaixa) {
+    const dados = await httpsGetGitHub(GITHUB_RAW);
+    const chaves = Object.keys(dados).map(Number);
+
+    if (!concurso) {
       const maxConcurso = Math.max(...chaves);
       return parseResultadoGitHub(maxConcurso, dados[String(maxConcurso)]);
     }
-  }
 
-  try {
-    const resultado = await fetchConcursoCaixa(concurso);
-    return parseResultadoCaixa(resultado);
-  } catch (eCaixa) {
-    const dados = await fetchDadosGitHub();
     const entry = dados[String(concurso)];
-    if (!entry) throw new Error(`Concurso ${concurso} não encontrado em nenhuma fonte`);
+    if (!entry) throw new Error(`Concurso ${concurso} não encontrado (Caixa: ${eCaixa.message})`);
     return parseResultadoGitHub(concurso, entry);
   }
 }
 
 async function fetchConcursosApos(ultimoConcurso, limite) {
-  const dados = await fetchDadosGitHub();
-  const chaves = Object.keys(dados)
-    .map(Number)
-    .filter(n => n > ultimoConcurso)
-    .sort((a, b) => a - b)
-    .slice(0, limite);
+  try {
+    const resultados = [];
+    for (let i = 0; i < limite; i++) {
+      const concurso = ultimoConcurso + 1 + i;
+      const resultado = await fetchConcurso(concurso);
+      resultados.push(resultado);
+    }
+    return resultados;
+  } catch (e) {
+    const dados = await httpsGetGitHub(GITHUB_RAW);
+    const chaves = Object.keys(dados)
+      .map(Number)
+      .filter(n => n > ultimoConcurso)
+      .sort((a, b) => a - b)
+      .slice(0, limite);
 
-  return chaves.map(c => parseResultadoGitHub(c, dados[String(c)]));
+    return chaves.map(c => parseResultadoGitHub(c, dados[String(c)]));
+  }
 }
 
 module.exports = { fetchConcurso, fetchConcursosApos };
